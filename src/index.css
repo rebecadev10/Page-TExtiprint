@@ -1,0 +1,1137 @@
+/* ==========================================================================
+   VARIABLES DE MARCA Y CONFIGURACIÓN GLOBAL
+   ========================================================================== */
+:root {
+  --font-main: 'Poppins', sans-serif;
+
+  /* Colores principales de la identidad Textiprint */
+  --color-purple: #6f237e;
+  --color-yellow: #ffbc2f;
+  --color-vivid-pink: #dd0a68;
+  --color-vivid-magenta: #f84eab;
+  --color-white: #fffafb;
+  --color-white-pure: #ffffff;
+  --color-black: #000000;
+  --color-dark-bg: #2d1433; /* Fondo oscuro corporativo */
+  --color-text-muted: #555555;
+  
+  --shadow-sm: 0 4px 15px rgba(111, 35, 126, 0.03);
+  --shadow-md: 0 8px 25px rgba(111, 35, 126, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-white);
+  color: var(--color-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, textarea, select, a {
+  font-family: var(--font-main);
+  transition: all 0.25s ease-in-out;
+}
+
+/* Estructura Base Layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* ==========================================================================
+   CLASES COMPARTIDAS / COMPONENTES NAVBAR Y FOOTER
+   ========================================================================== */
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 5%;
+  border-bottom: 1px solid #e2dbdd;
+  background-color: var(--color-white);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.nav-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.nav-brand-name {
+  font-weight: bold;
+  font-size: 20px;
+  color: var(--color-black);
+}
+
+.nav-links {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.nav-link-item {
+  text-decoration: none;
+  color: var(--color-black);
+  font-weight: 500;
+}
+
+.nav-link-item.active {
+  color: var(--color-purple);
+  font-weight: 600;
+}
+
+.btn-nav-contact {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+  padding: 10px 22px;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(255, 188, 47, 0.2);
+}
+
+.btn-nav-contact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 188, 47, 0.3);
+}
+
+/* Footer */
+.footer {
+  background-color: var(--color-black);
+  color: var(--color-white-pure);
+  padding: 40px 5% 20px 5%;
+  font-size: 0.95rem;
+}
+
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-bottom: 1px solid #333;
+  padding-bottom: 30px;
+}
+
+.footer-brand-col {
+  flex: 1 1 250px;
+}
+
+.footer-brand-title {
+  color: var(--color-yellow);
+  margin: 0 0 10px 0;
+  font-size: 1.4rem;
+}
+
+.footer-links-col {
+  flex: 1 1 200px;
+}
+
+.footer-col-title {
+  color: var(--color-vivid-magenta);
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.footer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-list li {
+  margin-bottom: 10px;
+}
+
+.footer-list a {
+  color: #bbb;
+  text-decoration: none;
+}
+
+.footer-list a:hover {
+  color: var(--color-white-pure);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+/* Modales Compartidos */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--color-white-pure);
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid #e2dbdd;
+}
+
+.modal-title {
+  color: var(--color-purple);
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.modal-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--color-purple);
+  font-size: 1rem;
+  background-color: var(--color-white-pure);
+}
+
+.modal-info-box {
+  background-color: #fffbe6;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--color-yellow);
+  line-height: 1.4;
+  color: #333;
+}
+
+/* ==========================================================================
+   SRC/PAGES/HOME.JSX - ESTILOS CON IDENTIDAD DE MARCA (UX/UI)
+   ========================================================================== */
+.home-wrapper {
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+/* 1. Hero Sección */
+.home-hero-section {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 24px;
+  background: radial-gradient(circle at 85% 20%, #fdf2f8 0%, var(--color-white) 70%);
+}
+
+.hero-container {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 56px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-text-side {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.home-hero-title {
+  font-size: 3.4rem;
+  font-weight: 900;
+  color: var(--color-purple);
+  line-height: 1.1;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.home-hero-title span {
+  background: linear-gradient(120deg, var(--color-vivid-pink) 0%, var(--color-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.home-hero-desc {
+  font-size: 1.15rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.home-hero-buttons {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.btn-hero-primary {
+  padding: 16px 36px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 30px;
+  background: linear-gradient(135deg, var(--color-purple) 0%, #52185e 100%);
+  color: var(--color-white-pure);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(111, 35, 126, 0.25);
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(111, 35, 126, 0.35);
+}
+
+.home-hero-tagline {
+  display: inline-block;
+  background-color: #fce7f3;
+  color: var(--color-vivid-pink);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px dashed var(--color-vivid-magenta);
+}
+
+/* Imagen Hero */
+.hero-image-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.hero-mockup-wrapper {
+  background: var(--color-white-pure);
+  padding: 14px;
+  border-radius: 32px;
+  box-shadow: 0 25px 50px rgba(111, 35, 126, 0.12);
+  border: 1px solid #fce7f3;
+  transform: rotate(1.5deg);
+  width: 100%;
+  max-width: 540px;
+}
+
+.hero-mockup-wrapper:hover {
+  transform: rotate(0deg) scale(1.03);
+}
+
+.hero-showcase-img {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  display: block;
+  object-fit: cover;
+}
+
+/* Elementos animados flotantes de marca */
+.hero-deco-sparkle {
+  position: absolute;
+  font-size: 1.6rem;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.sparkle-1 { top: 10%; left: 5%; animation: floatAnim 4s ease-in-out infinite alternate; }
+.sparkle-2 { bottom: 10%; left: 45%; animation: floatAnim 5s ease-in-out infinite alternate-reverse; }
+.sparkle-3 { top: 15%; right: 5%; animation: floatAnim 3s ease-in-out infinite alternate; }
+
+@keyframes floatAnim {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-12px) rotate(10deg); }
+}
+
+/* 2. Sección Servicios */
+.home-services-section {
+  padding: 80px 24px;
+  background-color: var(--color-white-pure);
+  text-align: center;
+}
+
+.home-section-subtitle-purple {
+  display: block;
+  color: var(--color-purple);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.home-section-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--color-black);
+  margin-bottom: 48px;
+}
+
+.home-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.service-card {
+  border-radius: 20px;
+  padding: 36px;
+  text-align: left;
+  border: 1px solid rgba(111, 35, 126, 0.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.service-card-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-purple);
+  margin: 0 0 12px 0;
+}
+
+.service-card-desc {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.bg-pastel-purple { background-color: #fbf2ff; border-left: 5px solid var(--color-vivid-magenta); }
+.bg-pastel-yellow { background-color: #fffbeb; border-left: 5px solid var(--color-yellow); }
+.bg-pastel-pink   { background-color: #fff1f2; border-left: 5px solid var(--color-vivid-pink); }
+.bg-pastel-cyan   { background-color: #ecfeff; border-left: 5px solid #2df4ff; }
+
+/* 3. Sección Productos Destacados */
+.home-featured-section {
+  padding: 80px 5%;
+  background-color: var(--color-white);
+  text-align: center;
+}
+
+.home-section-subtitle-pink {
+  color: var(--color-vivid-pink);
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* 4. Banner de Conversión Inferior */
+.home-cta-section {
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cta-box-dark {
+  background-color: var(--color-dark-bg);
+  border-radius: 16px;
+  padding: 50px 40px;
+  color: var(--color-white-pure);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.cta-text-side {
+  max-width: 500px;
+  text-align: left;
+}
+
+.cta-title-yellow {
+  font-size: 2rem;
+  margin: 0 0 15px 0;
+  color: var(--color-yellow);
+}
+
+.cta-desc-white {
+  margin: 0;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+.btn-cta-whatsapp {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+  text-decoration: none;
+  padding: 16px 32px;
+  border-radius: 30px;
+  font-weight: bold;
+  display: inline-block;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(255, 188, 47, 0.2);
+}
+
+.btn-cta-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 188, 47, 0.4);
+}
+
+
+/* ==========================================================================
+   CORRECCIÓN COMPLETA: LISTA DE PRODUCTOS / CATÁLOGO
+   ========================================================================== */
+.home-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Estructura limpia y plana tipo Polaroid */
+.featured-item-card {
+  background-color: var(--color-white-pure);
+  border: 1px solid #e2dbdd;
+  border-radius: 0px !important; /* Bordes rectos obligatorios */
+  padding: 0 !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.featured-item-card:hover {
+  transform: translateY(-2px);
+}
+
+.featured-item-img-box {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0px;
+  overflow: hidden;
+}
+
+.featured-item-img-box img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: cover;
+  display: block;
+}
+
+.featured-item-title {
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-black);
+  margin-top: 15px;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+/* NUEVO: Truncado estricto a un máximo de 2 líneas en catálogo */
+.featured-item-card p, 
+.product-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limita a un máximo de 2 líneas */
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8rem; /* Evita que las tarjetas bailen o queden desalineadas */
+  line-height: 1.4;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 8px 16px 12px 16px;
+  text-align: center;
+}
+
+.featured-item-controls {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* Fila de la presentación ("Presentación:" + Select) */
+.featured-item-controls > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.featured-item-controls select {
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: var(--font-main);
+  color: var(--color-black);
+  cursor: pointer;
+  outline: none;
+}
+
+/* Fila inferior de precio grande y acción */
+.featured-item-controls > div:last-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid #f0edf0;
+}
+
+/* Precio púrpura de Textiprint */
+.featured-item-controls span {
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  color: var(--color-purple) !important;
+}
+
+/* Botón "Ver Producto" */
+.btn-home-purple {
+  background-color: var(--color-white-pure);
+  color: var(--color-black);
+  border: 1px solid var(--color-black);
+  padding: 8px 18px !important;
+  border-radius: 4px;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-home-purple:hover {
+  background-color: #f8f5f6;
+}
+
+
+/* ==========================================================================
+   CORRECCIÓN COMPLETA: FICHA DE DETALLE DE PRODUCTO
+   ========================================================================== */
+.detail-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 80vh;
+}
+
+.btn-back {
+  background-color: transparent;
+  border: none;
+  color: var(--color-purple);
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 30px;
+  font-size: 1rem;
+}
+
+.detail-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.detail-gallery-col, .detail-info-col {
+  flex: 1 1 450px;
+}
+
+.main-image-container {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  background-color: var(--color-white-pure);
+  border: 1px solid #e2dbdd;
+}
+
+.main-image-container img {
+  width: 100%;
+  height: 480px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Miniaturas secundarias */
+.thumbnails-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.thumbnail-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.thumbnail-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Etiqueta superior de categoría (Papelería Física / Recurso Digital) */
+.product-tag {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Título morado gigante */
+.detail-title {
+  font-size: 3.2rem !important;
+  font-weight: 800 !important;
+  color: var(--color-purple) !important;
+  margin: 0 0 10px 0 !important;
+  letter-spacing: -0.5px;
+}
+
+/* Caja de precio pequeño arriba de las variantes */
+.detail-price-box {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* CORRECCIÓN: Estructura clara y espaciada que respeta los Enters del backend */
+.detail-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--color-black);
+  white-space: pre-line; /* ¡Mágico! Respeta saltos de línea de la Base de Datos */
+  margin-bottom: 25px;
+}
+
+/* Selector estilizado full-width con flecha púrpura */
+.detail-info-col select.modal-input {
+  width: 100% !important;
+  padding: 16px !important;
+  border: 1px solid var(--color-purple) !important;
+  border-radius: 8px !important;
+  font-size: 1.1rem !important;
+  color: var(--color-black) !important;
+  background-color: var(--color-white-pure) !important;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f237e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 16px center !important;
+  background-size: 16px !important;
+}
+
+/* Caja contenedora "Detalles del Recurso" */
+.specs-table-container {
+  background-color: var(--color-white-pure) !important;
+  border: 1px solid #e2dbdd !important;
+  border-radius: 12px !important;
+  padding: 24px 30px !important;
+  width: 100%;
+  margin-top: 30px;
+  box-shadow: none !important;
+}
+
+.specs-table-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-black);
+  margin-bottom: 20px;
+}
+
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.specs-table tr {
+  border-bottom: 1px solid #f5f2f5 !important;
+}
+
+.specs-table tr:last-child {
+  border-bottom: none !important;
+}
+
+.specs-table td {
+  padding: 14px 0 !important;
+  font-size: 1.05rem;
+  vertical-align: middle;
+}
+
+.specs-label {
+  color: var(--color-black) !important;
+  width: 35%;
+  text-align: left;
+}
+
+.specs-value {
+  color: var(--color-black) !important;
+  width: 65%;
+  text-align: left;
+}
+
+/* Botón llamativo inferior */
+.btn-action-main {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 30px;
+  color: var(--color-white-pure);
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 25px;
+  box-shadow: 0 8px 20px rgba(111, 35, 126, 0.2);
+}
+
+.btn-action-main:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+
+/* ==========================================================================
+   MEDIA QUERIES PARA RESPONSIVE
+   ========================================================================== */
+@media (max-width: 912px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  .hero-text-side {
+    align-items: center;
+  }
+  .hero-image-side {
+    order: -1;
+  }
+  .home-hero-title {
+    font-size: 2.6rem;
+  }
+  .hero-mockup-wrapper {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-services-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .home-section-title {
+    font-size: 1.8rem;
+  }
+  .cta-box-dark {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .cta-text-side {
+    text-align: center;
+  }
+}
+/* ==========================================================================
+   SRC/COMPONENTS/PEDIDOFORM.JSX - FORMULARIO DE CHECKOUT PREMIUM
+   ========================================================================== */
+.checkout-container {
+  max-width: 680px;
+  margin: 50px auto;
+  padding: 0 20px;
+  min-height: 75vh;
+}
+
+.checkout-card {
+  background-color: var(--color-white-pure);
+  border: 1px solid #e2dbdd;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+}
+
+.checkout-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--color-purple);
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+/* Caja informativa del producto que se está cargando */
+.checkout-product-summary {
+  background-color: #fbf2ff;
+  border-left: 4px solid var(--color-vivid-magenta);
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  color: var(--color-black);
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+.checkout-product-summary span {
+  font-weight: 700;
+  color: var(--color-purple);
+}
+
+/* Estructura del Formulario */
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Fila doble para Nombre y Apellido (Para calzar con tu nueva DB) */
+.checkout-form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.checkout-form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-black);
+}
+
+/* Inputs y Selects Estilizados */
+.checkout-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--color-black);
+  background-color: var(--color-white-pure);
+  outline: none;
+}
+
+.checkout-input:focus {
+  border-color: var(--color-purple);
+  box-shadow: 0 0 0 3px rgba(111, 35, 126, 0.1);
+}
+
+/* Dropdown personalizado para las ubicaciones de entrega de tu ENUM */
+.checkout-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f237e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  padding-right: 45px;
+  cursor: pointer;
+}
+
+/* Botón de Confirmación WhatsApp */
+.btn-checkout-submit {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(135deg, var(--color-purple) 0%, #52185e 100%);
+  color: var(--color-white-pure);
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+  box-shadow: 0 8px 20px rgba(111, 35, 126, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-checkout-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(111, 35, 126, 0.35);
+}
+
+/* Responsive para pantallas móviles */
+@media (max-width: 600px) {
+  .checkout-card {
+    padding: 24px;
+  }
+  .checkout-form-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .checkout-title {
+    font-size: 1.9rem;
+  }
+}
+/* Rejilla de productos en el Home */
+.home-featured-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 10px;
+}
+
+/* Tarjeta estilo Polaroid redondeada */
+.featured-item-card {
+  background-color: #ffffff;
+  border: 1px solid #f3ebee;
+  border-radius: 16px;
+  padding: 16px;
+  width: 290px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(111, 35, 126, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efecto hover para elevar la tarjeta */
+.featured-item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 22px rgba(111, 35, 126, 0.08);
+}
+
+/* Contenedor rosa pastel de la imagen */
+.featured-item-img-box {
+  background-color: #fde2e4;
+  border-radius: 12px;
+  padding: 0; /* Sin padding para que la imagen toque los bordes */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 240px;
+  overflow: hidden;
+}
+
+/* Imagen expandida a pantalla completa dentro de la caja rosa */
+.featured-item-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Llena el contenedor de forma uniforme */
+}
+
+/* Título morado de la tarjeta */
+.featured-item-title {
+  font-size: 1.25rem;
+  color: #6f237e;
+  font-weight: 700;
+  text-align: center;
+  margin: 18px 0 10px 0;
+}
+
+/* Contenedor de controles inferiores */
+.featured-item-controls {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Selector de presentación ovalado */
+.featured-item-select-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.featured-item-select {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 20px;
+  border: 1px solid #e2dbdd;
+  background-color: #ffffff;
+  color: #555555;
+  cursor: pointer;
+  outline: none;
+  text-align: center;
+}
+
+/* Precio destacado en fucsia */
+.featured-item-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #dd0a68;
+  text-align: center;
+  margin: 5px 0;
+}
+
+/* Botón ovalado estilizado */
+.btn-home-purple {
+  background-color: transparent;
+  color: #6f237e;
+  border: 2px solid #6f237e;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Hover del botón */
+.btn-home-purple:hover {
+  background-color: #6f237e;
+  color: #ffffff;
+}
+/* El precio principal, ahora en Bolívares */
+.featured-item-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #dd0a68; /* Tu fucsia vibrante */
+  text-align: center;
+  margin: 5px 0 12px 0; /* Un poco de margen inferior antes del botón */
+}
