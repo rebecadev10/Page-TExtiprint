@@ -1,5 +1,12 @@
 import React from 'react';
 import ProductsList from '../components/Products';
+import Hero1 from '../assets/Hero1.png';
+
+// 📸 Importa tus imágenes desde la carpeta assets (o actualiza los nombres según tus archivos)
+import topperImg from '../assets/Topper.png';
+import canvaImg from '../assets/plantillas.png';
+import etiquetasImg from '../assets/etiqueta.png';
+import corporativoImg from '../assets/Tarjetas.png';
 
 export default function Home() {
   const handleScrollToSection = (id) => {
@@ -9,28 +16,32 @@ export default function Home() {
     }
   };
 
- const services = [
-  { 
-    title: 'Planners & Agendas Personalizadas', 
-    desc: 'Organizadores físicos diseñados exclusivamente para estructurar tus metas cotidianas, combinando funcionalidad impecable con acabados de alta calidad.', 
-    className: 'bg-pastel-purple' 
-  },
-  { 
-    title: 'Plantillas de Canva Editables', 
-    desc: 'Recursos e identidades digitales listas para transformar tus redes sociales o proyectos comerciales de manera inmediata, profesional y sin complicaciones.', 
-    className: 'bg-pastel-yellow' 
-  },
-  { 
-    title: 'Kits de Etiquetas Escolares', 
-    desc: 'Identificadores creativos de alta resistencia diseñados para organizar todos los útiles de los más pequeños con diseños únicos y duraderos.', 
-    className: 'bg-pastel-pink' 
-  },
-  { 
-    title: 'Papelería e Identidad Corporativa', 
-    desc: 'Tarjetas de presentación, empaques y complementos impresos detalladamente para elevar la presencia de tu marca y cautivar a tus clientes desde el primer contacto.', 
-    className: 'bg-pastel-cyan' 
-  },
-];
+  const services = [
+    { 
+      title: 'Cake Toppers & Papelería de Fiesta', 
+      desc: 'Diseños multicapa 3D y temáticos personalizados en corte fino para hacer brillar tus tortas y celebraciones especiales.', 
+      className: 'bg-pastel-purple',
+      img: topperImg
+    },
+    { 
+      title: 'Plantillas de Canva Editables', 
+      desc: 'Recursos e identidades digitales listas para transformar tus redes sociales o proyectos comerciales de manera inmediata, profesional y sin complicaciones.', 
+      className: 'bg-pastel-yellow',
+      img: canvaImg
+    },
+    { 
+      title: 'Kits de Etiquetas Escolares', 
+      desc: 'Identificadores creativos de alta resistencia diseñados para organizar todos los útiles de los más pequeños con diseños únicos y duraderos.', 
+      className: 'bg-pastel-pink',
+      img: etiquetasImg
+    },
+    { 
+      title: 'Papelería e Identidad Corporativa', 
+      desc: 'Tarjetas de presentación, empaques y complementos impresos detalladamente para elevar la presencia de tu marca y cautivar a tus clientes desde el primer contacto.', 
+      className: 'bg-pastel-cyan',
+      img: corporativoImg
+    },
+  ];
 
   return (
     <div className="home-wrapper">
@@ -43,7 +54,7 @@ export default function Home() {
 
         <div className="hero-container">
           
-          {/* COLUMNA IZQUIERDA: MENSAJE CON JERARQUÍA CLARA */}
+          {/* COLUMNA IZQUIERDA */}
           <div className="hero-text-side">
             <h1 className="home-hero-title">
               Haz realidad tus ideas <br />
@@ -54,7 +65,6 @@ export default function Home() {
               Creamos recursos digitales y piezas físicas pensadas para inspirar puro orden y alegría en tus días.
             </p>
             
-            {/* CTA Único enfocado en conversión */}
             <div className="home-hero-buttons">
               <button 
                 onClick={() => handleScrollToSection('catalogo-vivo')} 
@@ -64,17 +74,16 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Mensaje clave/Etiqueta reposicionado estratégicamente abajo */}
             <span className="home-hero-tagline">
               ✂️ Diseño &amp; Papelería Exclusiva
             </span>
           </div>
 
-          {/* COLUMNA DERECHA: IMAGEN PROTAGONISTA AMPLIFICADA */}
+          {/* COLUMNA DERECHA */}
           <div className="hero-image-side">
             <div className="hero-mockup-wrapper">
               <img 
-                src="https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=600&auto=format&fit=crop" 
+                src={Hero1} 
                 alt="Colección Exclusiva Textiprint Showcase" 
                 className="hero-showcase-img"
                 onError={(e) => {
@@ -88,22 +97,37 @@ export default function Home() {
       </section>
 
       {/* 2. SECCIÓN NUESTROS SERVICIOS */}
-     <section className="home-services-section">
-  <span className="home-section-subtitle-purple">¿Qué hacemos?</span>
-  <h2 className="home-section-title">Servicios &amp; Categorías</h2>
-  
-  <div className="home-services-grid">
-    {services.map((service, index) => (
-      <div 
-        key={index} 
-        className={`service-card ${service.className}`}
-      >
-        <h3 className="service-card-title">{service.title}</h3>
-        <p className="service-card-desc">{service.desc}</p>
-      </div>
-    ))}
-  </div>
-</section>
+      <section className="home-services-section">
+        <span className="home-section-subtitle-purple">¿Qué hacemos?</span>
+        <h2 className="home-section-title">Servicios &amp; Categorías</h2>
+        
+        <div className="home-services-grid">
+          {services.map((service, index) => (
+            <div 
+              key={index} 
+              className={`service-card ${service.className}`}
+            >
+              <div className="service-card-content">
+                <h3 className="service-card-title">{service.title}</h3>
+                <p className="service-card-desc">{service.desc}</p>
+              </div>
+              
+              {service.img && (
+                <div className="service-card-img-wrapper">
+                  <img 
+                    src={service.img} 
+                    alt={service.title} 
+                    className="service-card-img"
+                    onError={(e) => {
+                      e.target.style.display = 'none'; // Se oculta limpio si no encuentra la imagen
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* 3. CATÁLOGO REAL ASOCIADO A SUPABASE */}
       <section className="home-featured-section" id="catalogo-vivo">

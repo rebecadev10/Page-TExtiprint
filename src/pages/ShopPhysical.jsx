@@ -6,28 +6,43 @@ export default function ShopPhysical() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD
 
   useEffect(() => {
-    async function obtenerProductosFisicos() {
+    async function obtenerProductosYTasa() {
       try {
         setLoading(true);
-        // Traemos solo los productos de tipo 'fisico' con sus variaciones
-        const { data, error } = await supabase
+
+        // 1. Traemos los productos físicos
+        const { data: productosData, error: productosError } = await supabase
           .from('productos')
           .select('id, nombre, tipo, imagen_url, product_variations(precio_venta)')
           .eq('tipo', 'fisico')
           .order('nombre');
 
-        if (error) throw error;
-        setProductos(data);
+        if (productosError) throw productosError;
+        setProductos(productosData);
+
+        // 2. Traemos la tasa BCV desde configuraciones
+        const { data: configData, error: configError } = await supabase
+          .from('configuraciones')
+          .select('valor')
+          .eq('clave', 'tasa_bcv');
+
+        if (!configError && configData && configData.length > 0) {
+          setTasa(parseFloat(configData[0].valor));
+        } else {
+          setTasa(1);
+        }
+
       } catch (error) {
-        console.error('Error al cargar papelería:', error.message);
+        console.error('Error al cargar papelería física o tasa:', error.message);
       } finally {
         setLoading(false);
       }
     }
 
-    obtenerProductosFisicos();
+    obtenerProductosYTasa();
   }, []);
 
   return (
@@ -48,15 +63,16 @@ export default function ShopPhysical() {
           <p style={{ fontSize: '1.2rem' }}>Próximamente añadiremos nuestro inventario físico disponible.</p>
         </div>
       ) : (
-        /* Reutilizamos el grid de tarjetas estilizadas */
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '30px', maxWidth: '1200px', margin: '0 auto', paddingBottom: '60px' }}>
           {productos.map(prod => {
-            // Obtenemos el precio más bajo registrado en sus variaciones
-            const precios = prod.product_variations?.map(v => Number(v.precio_venta)) || [];
-            const precioMinimo = precios.length > 0 ? Math.min(...precios) : 0;
+            const preciosUSD = prod.product_variations?.map(v => Number(v.precio_venta)) || [];
+            const precioMinimoUSD = preciosUSD.length > 0 ? Math.min(...preciosUSD) : 0;
+            
+            // Multiplicación equivalente a la de ProductsList
+            const precioVES = precioMinimoUSD * tasa;
 
             return (
-              <div key={prod.id} className="product-card" style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', backgroundColor: '#ffffff', boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'between' }}>
+              <div key={prod.id} className="product-card" style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', backgroundColor: '#ffffff', boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <img 
                   src={prod.imagen_url || 'https://via.placeholder.com/240'} 
                   alt={prod.nombre} 
@@ -67,8 +83,9 @@ export default function ShopPhysical() {
                   {prod.nombre}
                 </h3>
                 
-                <div style={{ fontWeight: 'bold', margin: '15px 0', fontSize: '1.3rem', color: '#dd0a68', textAlign: 'center', marginTop: 'auto' }}>
-                  ${precioMinimo.toFixed(2)}
+                {/* Único bloque de precio: Bolívares (Bs.) */}
+                <div style={{ fontWeight: '800', margin: '15px 0', fontSize: '1.4rem', color: '#dd0a68', textAlign: 'center', marginTop: 'auto' }}>
+                  Bs. {precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

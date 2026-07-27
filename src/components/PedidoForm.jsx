@@ -10,6 +10,7 @@ export default function PedidoForm() {
   const { producto, variacionSeleccionada } = location.state || {};
 
   const [loading, setLoading] = useState(false);
+  const [tasa, setTasa] = useState(1);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -18,11 +19,30 @@ export default function PedidoForm() {
     ubicacion: ''
   });
 
-  // Redirección de seguridad si no hay datos en el estado
+  // Redirección de seguridad y carga de tasa BCV
   useEffect(() => {
     if (!producto || !variacionSeleccionada) {
       navigate('/');
+      return;
     }
+
+    async function obtenerTasa() {
+      try {
+        const { data, error } = await supabase
+          .from('configuraciones')
+          .select('valor')
+          .eq('clave', 'tasa_bcv')
+          .single();
+
+        if (!error && data) {
+          setTasa(parseFloat(data.valor));
+        }
+      } catch (err) {
+        console.error('Error al cargar la tasa BCV:', err.message);
+      }
+    }
+
+    obtenerTasa();
   }, [producto, variacionSeleccionada, navigate]);
 
   const handleChange = (e) => {
@@ -32,16 +52,15 @@ export default function PedidoForm() {
       [name]: value
     }));
   };
-const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       let clienteId = null;
 
-      // ------------------------------------------------------------------
-      // PASO 1: VALIDACIÓN DE DUPLICADOS (Por Teléfono)
-      // ------------------------------------------------------------------
+      // 1. VALIDACIÓN / REGISTRO DE CLIENTE
       const { data: clientesEncontrados, error: searchError } = await supabase
         .from('clientes')
         .select('id')
@@ -51,10 +70,8 @@ const handleSubmit = async (e) => {
       if (searchError) throw searchError;
 
       if (clientesEncontrados && clientesEncontrados.length > 0) {
-        // El cliente ya existe, reciclamos su ID para no duplicarlo
         clienteId = clientesEncontrados[0].id;
       } else {
-        // Es un cliente nuevo, lo registramos de cero
         const { data: nuevoCliente, error: clienteError } = await supabase
           .from('clientes')
           .insert([
@@ -74,43 +91,37 @@ const handleSubmit = async (e) => {
         clienteId = nuevoCliente.id;
       }
 
-      // ------------------------------------------------------------------
-      // PASO 2: REGISTRAR EN LA TABLA 'pedidos'
-      // ------------------------------------------------------------------
+      // 2. REGISTRO EN 'pedidos'
       const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos')
         .insert([
           {
             cliente_id: clienteId,
             estado: 'pendiente',
-            total_pedido: variacionSeleccionada.precio_venta
+            total_pedido: variacionSeleccionada.precio_venta // Se mantiene en USD en la BD
           }
         ])
         .select()
-        .single(); // Clave para heredar el ID del pedido generado hacia sus ítems
+        .single();
 
       if (pedidoError) throw pedidoError;
 
-      // ------------------------------------------------------------------
-      // PASO 3: REGISTRAR EN LA TABLA 'pedido_items' (¡El que nos faltaba!)
-      // ------------------------------------------------------------------
+      // 3. REGISTRO EN 'pedido_items'
       const { error: itemError } = await supabase
         .from('pedido_items')
         .insert([
           {
-            pedido_id: pedidoData.id,               // Enlace relacional con el pedido maestro
-            variation_id: variacionSeleccionada.id, // Relación con product_variations
-            cantidad: 1,                            // Cantidad base inicial
+            pedido_id: pedidoData.id,
+            variation_id: variacionSeleccionada.id,
+            cantidad: 1,
             precio_unitario: variacionSeleccionada.precio_venta
           }
         ]);
 
       if (itemError) throw itemError;
 
-      // ------------------------------------------------------------------
-      // PASO 4: REGISTRAR EN LA TABLA CONTABLE 'ventas'
-      // ------------------------------------------------------------------
-      const { data: ventaData, error: ventaError } = await supabase
+      // 4. REGISTRO EN 'ventas'
+      const { error: ventaError } = await supabase
         .from('ventas')
         .insert([
           {
@@ -119,30 +130,26 @@ const handleSubmit = async (e) => {
             total_venta: variacionSeleccionada.precio_venta,
             estado: 'pendiente'
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (ventaError) throw ventaError;
 
-      // ------------------------------------------------------------------
-      // PASO 5: REDIRECCIÓN FORMATEADA A WHATSAPP
-      // ------------------------------------------------------------------
-      // Usamos el ID abreviado del pedido para darle consistencia a la orden
+      // 5. CÁLCULO Y CONSTRUCCIÓN DEL MENSAJE DE WHATSAPP (CORTO Y EN BS.)
       const numeroOrden = pedidoData.id.slice(0, 8).toUpperCase();
       const telefonoWhatsApp = "584142467351"; 
       
+      const precioUSD = Number(variacionSeleccionada.precio_venta) || 0;
+      const totalVES = precioUSD * tasa;
+      const totalFormateadoBs = `Bs. ${totalVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
       const mensajeText = 
-        `¡Hola Textiprint! 👋✨\n\n` +
-        `He registrado mi solicitud desde la web.\n\n` +
-        `📦 *Orden:* #${numeroOrden}\n` +
-        `👤 *Cliente:* ${formData.nombre} ${formData.apellido}\n` +
-        `📞 *Teléfono:* ${formData.telefono}\n` +
-        `📍 *Ubicación:* ${formData.ubicacion}\n\n` +
-        `🛒 *Producto:* ${producto.nombre}\n` +
-        `📐 *Presentación:* ${variacionSeleccionada.presentacion}\n` +
-        `💰 *Total:* $${Number(variacionSeleccionada.precio_venta).toFixed(2)} USD\n\n` +
-        `Me gustaría coordinar los detalles del pago para procesar mi pedido.`;
+        `¡Hola Textiprint! He realizado un pedido desde la web:\n\n` +
+        `*Orden:* #${numeroOrden}\n` +
+        `*Cliente:* ${formData.nombre} ${formData.apellido}\n` +
+        `*Ubicación:* ${formData.ubicacion}\n` +
+        `*Producto:* ${producto.nombre} (${variacionSeleccionada.presentacion})\n` +
+        `*Total a pagar:* ${totalFormateadoBs}\n\n` +
+        `Quiero coordinar el pago para procesarlo.`;
 
       const urlWhatsapp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeText)}`;
       
@@ -150,8 +157,8 @@ const handleSubmit = async (e) => {
       navigate('/');
 
     } catch (error) {
-      console.error("Error al procesar la transacción completa:", error.message);
-      alert("Hubo un problema al procesar tu pedido en la base de datos. Por favor, intenta de nuevo.");
+      console.error("Error al procesar la transacción:", error.message);
+      alert("Hubo un problema al procesar tu pedido. Por favor intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -159,13 +166,17 @@ const handleSubmit = async (e) => {
 
   if (!producto || !variacionSeleccionada) return null;
 
+  const precioUSD = Number(variacionSeleccionada.precio_venta) || 0;
+  const precioVES = precioUSD * tasa;
+  const precioFormateadoBs = `Bs. ${precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   return (
     <div className="checkout-container">
       <div className="checkout-card">
         <h2 className="checkout-title">Finalizar Pedido</h2>
         
         <div className="checkout-product-summary">
-          Estás encargando: <span>{producto.nombre} ({variacionSeleccionada.presentacion})</span> por <span>${Number(variacionSeleccionada.precio_venta).toFixed(2)} USD</span>
+          Estás encargando: <span>{producto.nombre} ({variacionSeleccionada.presentacion})</span> por <span>{precioFormateadoBs}</span>
         </div>
 
         <form onSubmit={handleSubmit} className="checkout-form">

@@ -11,6 +11,7 @@ export default function ProductDetail() {
   const [variaciones, setVariaciones] = useState([]);
   const [variacionSeleccionada, setVariacionSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD
   
   // Estados de la interfaz interactiva
   const [email, setEmail] = useState('');
@@ -21,9 +22,10 @@ export default function ProductDetail() {
   const telefonoWhatsApp = "584142467351"; 
 
   useEffect(() => {
-    async function cargarDetalleProducto() {
+    async function cargarDetalleProductoYTasa() {
       try {
         setLoading(true);
+        
         // 1. Buscamos el producto base
         const { data: prodData, error: prodError } = await supabase
           .from('productos')
@@ -47,6 +49,19 @@ export default function ProductDetail() {
         if (varData && varData.length > 0) {
           setVariacionSeleccionada(varData[0]);
         }
+
+        // 3. Cargamos la tasa BCV desde la tabla configuraciones
+        const { data: configData, error: configError } = await supabase
+          .from('configuraciones')
+          .select('valor')
+          .eq('clave', 'tasa_bcv');
+
+        if (!configError && configData && configData.length > 0) {
+          setTasa(parseFloat(configData[0].valor));
+        } else {
+          setTasa(1);
+        }
+
       } catch (error) {
         console.error('Error al cargar producto:', error.message);
       } finally {
@@ -54,7 +69,7 @@ export default function ProductDetail() {
       }
     }
 
-    if (id) cargarDetalleProducto();
+    if (id) cargarDetalleProductoYTasa();
   }, [id]);
 
   if (loading) {
@@ -79,28 +94,28 @@ export default function ProductDetail() {
   const isDigital = producto.tipo === 'digital';
   
   // --- LÓGICA DE GALERÍA DE IMÁGENES ---
-  // --- LÓGICA DE GALERÍA DE IMÁGENES ---
   const mainImageFromDB = producto.imagen_url;
-  
-  // CORRECCIÓN: Agrupamos la principal con el array de secundarias que viene de la BD
   const secundarias = producto.imagenes_secundarias || [];
   const allImages = mainImageFromDB ? [mainImageFromDB, ...secundarias] : [...secundarias];
-
   const currentMainImage = activeImg || mainImageFromDB;
-  const precioMostrar = variacionSeleccionada ? Number(variacionSeleccionada.precio_venta).toFixed(2) : '0.00';
 
+  // --- CÁLCULO EN BOLÍVARES (VES) ---
+  const precioUSD = variacionSeleccionada ? Number(variacionSeleccionada.precio_venta) : 0;
+  const precioVES = precioUSD * tasa;
+  const precioFormateadoBs = `Bs. ${precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   // Manejador de la acción principal del botón de compra
   const handleAction = () => {
     if (isDigital) {
       setShowDigitalModal(true);
     } else {
-      // PRODUCTO FÍSICO: Redirige limpiamente a la página del formulario independiente
-      // Pasamos los datos del producto y variación seleccionada en el state de la navegación
+      // PRODUCTO FÍSICO: Redirige al formulario independiente enviando el precio calculado en Bs y la tasa
       navigate('/pedido', { 
         state: { 
           producto: producto, 
-          variacionSeleccionada: variacionSeleccionada 
+          variacionSeleccionada: variacionSeleccionada,
+          precioVES: precioVES,
+          tasa: tasa
         } 
       });
     }
@@ -112,20 +127,17 @@ export default function ProductDetail() {
     
     const nombreProducto = producto?.nombre || "";
     const presentacion = variacionSeleccionada?.presentacion || "Única";
-    const precio = variacionSeleccionada?.precio_venta ? `$${variacionSeleccionada.precio_venta}` : "";
 
-    // Construcción del mensaje prellenado para producto DIGITAL
+    // Construcción del mensaje para WhatsApp mostrando el monto exacto en Bs.
     const mensajeDigital = `¡Hola Textiprint! 👋 Hice un pedido desde la web.\n\n` +
       `💻 *Recurso Digital:* ${nombreProducto}\n` +
       `🎨 *Presentación:* ${presentacion}\n` +
-      `💰 *Monto:* ${precio}\n` +
+      `💰 *Monto a pagar:* ${precioFormateadoBs}\n` +
       `📧 *Correo de Canva:* ${email}\n\n` +
       `Adjunto mi comprobante de pago para la activación. ✨`;
 
-    // Crear el enlace URL válido utilizando la constante global del componente
     const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
     
-    // Abrir en una pestaña nueva
     window.open(urlWhatsApp, '_blank');
     setShowDigitalModal(false);
   };
@@ -179,8 +191,9 @@ export default function ProductDetail() {
           
           <h1 className="detail-title">{producto.nombre}</h1>
           
+          {/* Precio Principal en Bolívares */}
           <div className="detail-price-box">
-            <span style={{ color: 'var(--color-purple)' }}>${precioMostrar} USD</span>
+            <span style={{ color: 'var(--color-purple)' }}>{precioFormateadoBs}</span>
           </div>
 
           <p className="detail-desc">{producto.descripcion}</p>
@@ -200,16 +213,20 @@ export default function ProductDetail() {
                 className="modal-input"
                 style={{ cursor: 'pointer', background: '#fff' }}
               >
-                {variaciones.map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.presentacion} — (${Number(v.precio_venta).toFixed(2)} USD)
-                  </option>
-                ))}
+                {variaciones.map(v => {
+                  const vesVal = Number(v.precio_venta) * tasa;
+                  const bsFormatted = vesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return (
+                    <option key={v.id} value={v.id}>
+                      {v.presentacion} — (Bs. {bsFormatted})
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}
 
-          {/* Tabla de especificaciones estables */}
+          {/* Tabla de especificaciones */}
           <div className="specs-table-container">
             <h3 className="specs-table-title">📋 Detalles del Recurso</h3>
             <table className="specs-table">
@@ -244,13 +261,16 @@ export default function ProductDetail() {
           <div className="modal-content">
             <h3 className="modal-title">Registro de Acceso</h3>
             <p>Se activará el enlace para: <strong className="price-premium">{producto.nombre}</strong></p>
+            <p style={{ marginTop: '5px', fontSize: '0.95rem', color: '#555' }}>
+              Monto a transferir: <strong style={{ color: 'var(--color-vivid-pink)' }}>{precioFormateadoBs}</strong>
+            </p>
             
             <form onSubmit={handleModalSubmit}>
               <label className="modal-label">Tu Correo de Canva:</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="ejemplo@gmail.com" className="modal-input" />
               
               <div className="modal-info-box">
-                Al presionar el botón se abrirá WhatsApp. Envíanos tu comprobante de Pago Móvil o Zinli y habilitaremos el acceso a este correo de inmediato.
+                Al presionar el botón se abrirá WhatsApp. Envíanos tu comprobante de Pago Móvil y habilitaremos el acceso a este correo de inmediato.
               </div>
 
               <button type="submit" className="btn-whatsapp">

@@ -6,6 +6,7 @@ export default function ShopDigital() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [email, setEmail] = useState('');
 
@@ -20,26 +21,40 @@ export default function ShopDigital() {
   };
 
   useEffect(() => {
-    async function obtenerPlantillas() {
+    async function obtenerPlantillasYTasa() {
       try {
         setLoading(true);
-        // Buscamos los productos del tipo 'digital'
-        const { data, error } = await supabase
+
+        // 1. Buscamos las plantillas digitales
+        const { data: productosData, error: productosError } = await supabase
           .from('productos')
           .select('id, nombre, tipo, imagen_url, product_variations(precio_venta)')
           .eq('tipo', 'digital')
           .order('nombre');
 
-        if (error) throw error;
-        setProductos(data);
+        if (productosError) throw productosError;
+        setProductos(productosData);
+
+        // 2. Traemos la tasa de cambio
+        const { data: configData, error: configError } = await supabase
+          .from('configuraciones')
+          .select('valor')
+          .eq('clave', 'tasa_bcv');
+
+        if (!configError && configData && configData.length > 0) {
+          setTasa(parseFloat(configData[0].valor));
+        } else {
+          setTasa(1);
+        }
+
       } catch (error) {
-        console.error('Error al cargar plantillas:', error.message);
+        console.error('Error al cargar plantillas o tasa:', error.message);
       } finally {
         setLoading(false);
       }
     }
 
-    obtenerPlantillas();
+    obtenerPlantillasYTasa();
   }, []);
 
   const handleOpenModal = (template) => {
@@ -50,16 +65,19 @@ export default function ShopDigital() {
     e.preventDefault();
     if (!email) return;
 
-    const phoneNumber = "584142467351"; // Tu WhatsApp de Textiprint
-    const precios = selectedTemplate.product_variations?.map(v => Number(v.precio_venta)) || [];
-    const precioMinimo = precios.length > 0 ? Math.min(...precios) : 0;
-    const isFree = precioMinimo === 0;
+    const phoneNumber = "584142467351";
+    const preciosUSD = selectedTemplate.product_variations?.map(v => Number(v.precio_venta)) || [];
+    const precioMinimoUSD = preciosUSD.length > 0 ? Math.min(...preciosUSD) : 0;
+    const precioVES = precioMinimoUSD * tasa;
+    const isFree = precioMinimoUSD === 0;
+
+    const precioTextoBs = `Bs. ${precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     let message = "";
     if (isFree) {
       message = `¡Hola Textiprint! Me interesa la plantilla GRATUITA: "${selectedTemplate.nombre}".%0AMi correo registrado para Canva es: ${email}`;
     } else {
-      message = `¡Hola Textiprint! Quiero adquirir la plantilla premium: "${selectedTemplate.nombre}" ($${precioMinimo.toFixed(2)} USD).%0AMi correo para Canva es: ${email}.%0AAdjunto mi comprobante de pago:`;
+      message = `¡Hola Textiprint! Quiero adquirir la plantilla premium: "${selectedTemplate.nombre}" (${precioTextoBs} / $${precioMinimoUSD.toFixed(2)} USD).%0AMi correo para Canva es: ${email}.%0AAdjunto mi comprobante de pago:`;
     }
 
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
@@ -83,12 +101,12 @@ export default function ShopDigital() {
           <p style={{ fontSize: '1.2rem' }}>Próximamente añadiremos nuestras plantillas editables.</p>
         </div>
       ) : (
-        /* Grid de Productos Digitales reales */
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '30px', maxWidth: '1200px', margin: '0 auto' }}>
           {productos.map(temp => {
-            const precios = temp.product_variations?.map(v => Number(v.precio_venta)) || [];
-            const precioMinimo = precios.length > 0 ? Math.min(...precios) : 0;
-            const isFree = precioMinimo === 0;
+            const preciosUSD = temp.product_variations?.map(v => Number(v.precio_venta)) || [];
+            const precioMinimoUSD = preciosUSD.length > 0 ? Math.min(...preciosUSD) : 0;
+            const precioVES = precioMinimoUSD * tasa;
+            const isFree = precioMinimoUSD === 0;
 
             return (
               <div key={temp.id} style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', textAlign: 'center', backgroundColor: colors.whitePure, boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
@@ -101,11 +119,14 @@ export default function ShopDigital() {
                   {temp.nombre}
                 </h3>
                 
-                <div style={{ fontWeight: 'bold', margin: '15px 0', fontSize: '1.2rem', marginTop: 'auto' }}>
+                {/* Precio formateado a Bs. */}
+                <div style={{ fontWeight: 'bold', margin: '15px 0', fontSize: '1.3rem', marginTop: 'auto' }}>
                   {isFree ? (
                     <span style={{ color: colors.vividMagenta }}>¡Gratis!</span>
                   ) : (
-                    <span style={{ color: colors.vividPink }}>${precioMinimo.toFixed(2)} USD</span>
+                    <span style={{ color: colors.vividPink }}>
+                      Bs. {precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   )}
                 </div>
 
@@ -130,7 +151,7 @@ export default function ShopDigital() {
         </div>
       )}
 
-      {/* MODAL INTERACTIVO DE REGISTRO */}
+      {/* MODAL INTERACTIVO */}
       {selectedTemplate && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: colors.white, padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '400px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>

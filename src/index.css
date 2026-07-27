@@ -685,7 +685,7 @@ button, input, textarea, select, a {
 
 .main-image-container img {
   width: 100%;
-  height: 480px;
+  height: 580px;
   object-fit: cover;
   display: block;
 }
@@ -1134,4 +1134,309 @@ button, input, textarea, select, a {
   color: #dd0a68; /* Tu fucsia vibrante */
   text-align: center;
   margin: 5px 0 12px 0; /* Un poco de margen inferior antes del botón */
+}
+/* ==========================================================================
+   2. SECCIÓN SERVICIOS (CON IMÁGENES INTEGRADAS)
+   ========================================================================== */
+.home-services-section {
+  padding: 80px 24px;
+  background-color: var(--color-white-pure);
+  text-align: center;
+}
+
+.home-section-subtitle-purple {
+  display: block;
+  color: var(--color-purple);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.home-section-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--color-black);
+  margin-bottom: 48px;
+}
+
+.home-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Tarjeta estructurada con alineación horizontal */
+.service-card {
+  border-radius: 20px;
+  padding: 30px;
+  text-align: left;
+  border: 1px solid rgba(111, 35, 126, 0.05);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.service-card-content {
+  flex: 1;
+}
+
+.service-card-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-purple);
+  margin: 0 0 10px 0;
+  line-height: 1.25;
+}
+
+.service-card-desc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Contenedor e imagen representativa */
+.service-card-img-wrapper {
+  width: 250px;
+  height: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.service-card:hover .service-card-img {
+  transform: scale(1.08) rotate(3deg); /* Microinteracción al pasar el mouse */
+}
+
+/* Colores pastel corporativos */
+.bg-pastel-purple { background-color: #fbf2ff; border-left: 5px solid var(--color-vivid-magenta); }
+.bg-pastel-yellow { background-color: #fffbeb; border-left: 5px solid var(--color-yellow); }
+.bg-pastel-pink   { background-color: #fff1f2; border-left: 5px solid var(--color-vivid-pink); }
+.bg-pastel-cyan   { background-color: #ecfeff; border-left: 5px solid #2df4ff; }
+
+/* Adaptación Responsive para celulares */
+@media (max-width: 640px) {
+  .service-card {
+    flex-direction: column-reverse; /* La imagen queda arriba o abajo en pantallas pequeñas */
+    align-items: flex-start;
+  }
+  .service-card-img-wrapper {
+    width: 70px;
+    height: 70px;
+  }
+}
+/* ==========================================================================
+   AJUSTES RESPONSIVE MÓVIL PANTALLAS PEQUEÑAS (≤ 600px)
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  /* 1. Ocultar o compactar menú en móvil para evitar scroll horizontal */
+  .navbar {
+    padding: 10px 15px !important;
+  }
+  
+  .nav-brand-name {
+    font-size: 16px !important;
+  }
+
+  .nav-links {
+    gap: 10px !important;
+  }
+
+  .nav-link-item {
+    font-size: 0.8rem !important;
+  }
+
+  .btn-nav-contact {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* 2. Reparar Hero Section (Elimina el desborde y centra todo) */
+  .home-hero-section {
+    padding: 30px 16px !important;
+  }
+
+  .home-hero-title {
+    font-size: 2rem !important;
+    text-align: center;
+  }
+
+  .home-hero-desc {
+    font-size: 0.95rem !important;
+    text-align: center;
+  }
+
+  .home-hero-buttons {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .hero-mockup-wrapper {
+    max-width: 100% !important;
+    transform: none !important; /* Desactivar inclinación en móvil para evitar desborde */
+  }
+
+  /* 3. Reparar Tarjetas de Servicios (Stack vertical limpio) */
+  .home-services-section {
+    padding: 40px 16px !important;
+  }
+
+  .service-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 20px 16px !important;
+  }
+
+  .service-card-content {
+    width: 100%;
+  }
+
+  .service-card-img-wrapper {
+    width: 100% !important;
+    max-width: 140px !important;
+    height: 120px !important;
+    margin-bottom: 12px;
+  }
+
+  /* 4. Galería y Detalle de Producto en Móvil */
+  .detail-title {
+    font-size: 2rem !important;
+  }
+
+  .main-image-container img {
+    height: 320px !important; /* Reducir altura de la imagen en móviles */
+  }
+}
+/* ==========================================================================
+   AJUSTES PARA TARJETAS DE SERVICIOS EN MÓVIL (≤ 600px)
+   ========================================================================== */
+
+@media (max-width: 600px) {
+
+  /* 1. Contenedor principal de los servicios: de horizontal a vertical */
+  .services-grid, 
+  .services-container, 
+  .home-services-grid { 
+    display: flex !important;
+    flex-direction: column !important; /* Coloca una tarjeta debajo de la otra */
+    gap: 24px !important;              /* Espacio entre tarjetas */
+    width: 100% !important;
+  }
+
+  /* 2. Cada tarjeta individual ocupará todo el ancho disponible */
+  .service-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important; /* Si quieres Texto primero e Imagen abajo */
+    align-items: center !important;
+    padding: 24px 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* OPCIONAL A: Si quieres IMAGEN ARRIBA y TEXTO ABAJO */
+  .service-card {
+    flex-direction: column-reverse !important; /* Pone la imagen arriba */
+  }
+
+  /* Ajuste de la imagen dentro de la tarjeta */
+  .service-card img,
+  .service-card-img-wrapper {
+    width: 100% !important;
+    max-width: 200px !important; /* Controla el tamaño de la imagen */
+    height: auto !important;
+    margin-bottom: 12px;
+  }
+
+  /* Ajuste del texto para que no quede apretado */
+  .service-card-title,
+  .service-card-desc {
+    text-align: center !important;
+    width: 100% !important;
+  }
+}
+/* ==========================================================================
+   ESTILOS DE NAVBAR DENSOS Y RESPONSIVE (Móvil Menú Hamburguesa)
+   ========================================================================== */
+
+/* Botón Hamburguesa (Oculto en Escritorio) */
+.menu-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--color-purple);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+/* --- ADAPTACIÓN RESPONSIVE MÓVIL (≤ 768px) --- */
+@media (max-width: 768px) {
+  .navbar {
+    position: relative;
+    padding: 12px 20px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Mostrar botón de menú desplegable */
+  .menu-toggle-btn {
+    display: block !important;
+  }
+
+  /* Esconder la lista horizontal predeterminada */
+  .nav-links {
+    display: none !important;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-white-pure);
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 20px 0 !important;
+    gap: 18px !important;
+    border-bottom: 2px solid #e2dbdd;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    z-index: 200;
+  }
+
+  /* Mostrar la lista desplegable cuando menuOpen sea true */
+  .nav-links.nav-links-open {
+    display: flex !important;
+  }
+
+  .nav-link-item {
+    font-size: 1.1rem !important;
+  }
+
+  .btn-nav-contact {
+    margin-top: 5px;
+    width: 80%;
+    text-align: center;
+  }
 }
