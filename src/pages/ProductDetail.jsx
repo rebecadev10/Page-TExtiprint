@@ -127,39 +127,40 @@ export default function ProductDetail() {
 
 const handleModalSubmit = async (e) => {
   e.preventDefault();
-  setLoading(true); // O un estado para deshabilitar el botón si lo tienes
+  setLoading(true);
 
   try {
     const nombreProducto = producto?.nombre || "";
     const presentacion = variacionSeleccionada?.presentacion || "Única";
     const precio = variacionSeleccionada?.precio_venta || 0;
+    const variationId = variacionSeleccionada?.id || (variaciones.length > 0 ? variaciones[0].id : null);
 
-    // ------------------------------------------------------------------
-    // 1. REGISTRAR O BUSCAR CLIENTE (Guardamos su correo de Canva)
-    // ------------------------------------------------------------------
     let clienteId = null;
 
-    // Buscamos si el correo de Canva ya existe en la tabla clientes
-    const { data: clientesExistentes } = await supabase
+    // 1. BUSCAR SI EL CLIENTE YA EXISTE POR CORREO
+    const { data: clientesExistentes, error: searchError } = await supabase
       .from('clientes')
       .select('id')
       .eq('correo', email)
       .limit(1);
 
+    if (searchError) throw searchError;
+
     if (clientesExistentes && clientesExistentes.length > 0) {
       clienteId = clientesExistentes[0].id;
     } else {
-      // Creamos el registro del cliente con su correo de Canva
+      // 2. CREAR EL CLIENTE CUMPLIENDO EL ESQUEMA NOT NULL Y LOS ENUMS
+      // NOTA: Ajusta 'pagina_web' y 'Caracas' según los valores válidos de tu Enum en Supabase
       const { data: nuevoCliente, error: errCliente } = await supabase
         .from('clientes')
         .insert([
           {
             nombre: 'Cliente',
             apellido: 'Digital',
-            telefono: 'Sin teléfono', // Puedes agregar un input de teléfono si lo deseas
-            correo: email,           // Guardamos el correo ingresado en el modal
-            origen: 'web',            // Ajusta según los valores permitidos de tu Enum
-            ubicacion: 'digital'      // Ajusta según los valores permitidos de tu Enum
+            telefono: '00000000000', // Cumple con NOT NULL text
+            correo: email,
+            origen: 'pagina_web',    // Debe coincidir con el ENUM 'origen'
+            ubicacion: 'Caracas'     // Debe coincidir con el ENUM 'ubicacion'
           }
         ])
         .select()
@@ -169,9 +170,7 @@ const handleModalSubmit = async (e) => {
       clienteId = nuevoCliente.id;
     }
 
-    // ------------------------------------------------------------------
-    // 2. CREAR EL PEDIDO DIGITAL
-    // ------------------------------------------------------------------
+    // 3. REGISTRAR PEDIDO
     const { data: pedido, error: errPedido } = await supabase
       .from('pedidos')
       .insert([
@@ -186,16 +185,14 @@ const handleModalSubmit = async (e) => {
 
     if (errPedido) throw errPedido;
 
-    // ------------------------------------------------------------------
-    // 3. REGISTRAR LA VARIACIÓN / PLANTILLA VENDIDA
-    // ------------------------------------------------------------------
-    if (variacionSeleccionada?.id) {
+    // 4. REGISTRAR ITEM EN PEDIDO_ITEMS
+    if (variationId) {
       const { error: errItem } = await supabase
         .from('pedido_items')
         .insert([
           {
             pedido_id: pedido.id,
-            variation_id: variacionSeleccionada.id,
+            variation_id: variationId,
             cantidad: 1,
             precio_unitario: precio
           }
@@ -204,15 +201,13 @@ const handleModalSubmit = async (e) => {
       if (errItem) throw errItem;
     }
 
-    // ------------------------------------------------------------------
-    // 4. REGISTRAR LA VENTA EN EL MÓDULO CONTABLE
-    // ------------------------------------------------------------------
+    // 5. REGISTRAR EN VENTAS
     const { error: errVenta } = await supabase
       .from('ventas')
       .insert([
         {
           cliente_id: clienteId,
-          canal: 'web',
+          canal: 'tienda_online', // Debe coincidir con el ENUM 'canal'
           total_venta: precio,
           estado: 'pendiente'
         }
@@ -220,10 +215,10 @@ const handleModalSubmit = async (e) => {
 
     if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
 
-    // ------------------------------------------------------------------
-    // 5. REDIRIGIR A WHATSAPP
-    // ------------------------------------------------------------------
+    // 6. REDIRECCIÓN A WHATSAPP
     const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
+    const telefonoWhatsApp = "584142467351";
+    
     const mensajeDigital = 
       `¡Hola Textiprint! 👋✨\n\n` +
       `Adquirí un recurso digital desde la web.\n\n` +
@@ -232,19 +227,18 @@ const handleModalSubmit = async (e) => {
       `🎨 *Presentación:* ${presentacion}\n` +
       `💰 *Monto:* $${Number(precio).toFixed(2)} USD\n` +
       `📧 *Correo de Canva:* ${email}\n\n` +
-      `Adjunto mi comprobante de pago para la activación.`;
+      `Adjunto mi comprobante para la activación.`;
 
     const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
+    
     window.open(urlWhatsApp, '_blank');
     setShowDigitalModal(false);
 
   } catch (error) {
-    console.error('Error al guardar pedido digital:', error.message);
-    alert('Ocurrió un detalle al guardar la orden, pero iniciaremos tu consulta por WhatsApp.');
-    
-    // De todos modos abrimos WhatsApp por respaldo
-    const mensajeFallback = `¡Hola Textiprint! Quiero la plantilla: ${producto?.nombre} ($${variacionSeleccionada?.precio_venta} USD) para el correo: ${email}`;
-    window.open(`https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeFallback)}`, '_blank');
+    console.error('Error detallado:', error);
+    alert(`Error de Supabase: ${error.message || JSON.stringify(error)}`);
+  } finally {
+    setLoading(false);
   }
 };
   return (
