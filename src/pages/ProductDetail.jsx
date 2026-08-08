@@ -5,28 +5,28 @@ import { supabase } from '../supabaseClient';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  // Estados de datos reales de Supabase
+
+  // Estados del producto
   const [producto, setProducto] = useState(null);
   const [variaciones, setVariaciones] = useState([]);
   const [variacionSeleccionada, setVariacionSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD
-  
-  // Estados de la interfaz interactiva
-  const [email, setEmail] = useState('');
+  const [tasaCambio, setTasaCambio] = useState(1);
+
+  // Estados del Modal Digital
   const [showDigitalModal, setShowDigitalModal] = useState(false);
-  const [activeImg, setActiveImg] = useState(null); // Controla la foto grande actual
+  const [email, setEmail] = useState('');
 
-  // Número de WhatsApp único de Textiprint
-  const telefonoWhatsApp = "584142467351"; 
+  // Teléfono configurado para WhatsApp
+  const telefonoWhatsApp = "584142467351";
 
+  // Cargar producto, variaciones y tasa de cambio
   useEffect(() => {
-    async function cargarDetalleProductoYTasa() {
+    const fetchProductoYDatos = async () => {
       try {
         setLoading(true);
-        
-        // 1. Buscamos el producto base
+
+        // 1. Obtener producto
         const { data: prodData, error: prodError } = await supabase
           .from('productos')
           .select('*')
@@ -36,211 +36,203 @@ export default function ProductDetail() {
         if (prodError) throw prodError;
         setProducto(prodData);
 
-        // 2. Buscamos las variaciones de precios asociadas
+        // 2. Obtener variaciones del producto
         const { data: varData, error: varError } = await supabase
           .from('product_variations')
           .select('*')
-          .eq('producto_id', id)
-          .order('precio_venta', { ascending: true });
+          .eq('producto_id', id);
 
         if (varError) throw varError;
-        setVariaciones(varData);
-
+        setVariaciones(varData || []);
         if (varData && varData.length > 0) {
           setVariacionSeleccionada(varData[0]);
         }
 
-        // 3. Cargamos la tasa BCV desde la tabla configuraciones
-        const { data: configData, error: configError } = await supabase
+        // 3. Obtener Tasa BCV desde configuraciones
+        const { data: configData } = await supabase
           .from('configuraciones')
           .select('valor')
-          .eq('clave', 'tasa_bcv');
+          .eq('clave', 'tasa_bcv')
+          .single();
 
-        if (!configError && configData && configData.length > 0) {
-          setTasa(parseFloat(configData[0].valor));
-        } else {
-          setTasa(1);
+        if (configData?.valor) {
+          setTasaCambio(configData.valor);
         }
 
-      } catch (error) {
-        console.error('Error al cargar producto:', error.message);
+      } catch (err) {
+        console.error('Error al cargar detalle del producto:', err);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    if (id) cargarDetalleProductoYTasa();
+    if (id) fetchProductoYDatos();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="shop-container" style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <p style={{ color: 'var(--color-purple)', fontWeight: 'bold' }}>✨ Preparando la galería creativa...</p>
-      </div>
-    );
-  }
+  // Extraer Nombre y Apellido a partir del Correo Electrónico
+  const extraerNombreDeCorreo = (correo) => {
+    if (!correo) return { nombre: 'Cliente', apellido: 'Digital' };
+    
+    const usuario = correo.split('@')[0];
+    const partes = usuario.split(/[\._\-]/).filter(Boolean);
+    const capitalizar = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
-  if (!producto) {
-    return (
-      <div className="shop-container" style={{ textAlign: 'center', padding: '100px 20px' }}>
-        <h2 style={{ color: 'var(--color-purple)' }}>El recurso solicitado no se encuentra disponible</h2>
-        <button onClick={() => navigate('/')} className="btn-primary-purple" style={{ width: 'auto', marginTop: '20px' }}>
-          Volver al Inicio
-        </button>
-      </div>
-    );
-  }
-
-  const isDigital = producto.tipo === 'digital';
-  
-  // --- LÓGICA DE GALERÍA DE IMÁGENES ---
-  const mainImageFromDB = producto.imagen_url;
-  const secundarias = producto.imagenes_secundarias || [];
-  const allImages = mainImageFromDB ? [mainImageFromDB, ...secundarias] : [...secundarias];
-  const currentMainImage = activeImg || mainImageFromDB;
-
-  // --- CÁLCULO EN BOLÍVARES (VES) ---
-  const precioUSD = variacionSeleccionada ? Number(variacionSeleccionada.precio_venta) : 0;
-  const precioVES = precioUSD * tasa;
-  const precioFormateadoBs = `Bs. ${precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-  // Manejador de la acción principal del botón de compra
-  const handleAction = () => {
-    if (isDigital) {
-      setShowDigitalModal(true);
-    } else {
-      // PRODUCTO FÍSICO: Redirige al formulario independiente enviando el precio calculado en Bs y la tasa
-      navigate('/pedido', { 
-        state: { 
-          producto: producto, 
-          variacionSeleccionada: variacionSeleccionada,
-          precioVES: precioVES,
-          tasa: tasa
-        } 
-      });
+    if (partes.length >= 2) {
+      return {
+        nombre: capitalizar(partes[0]),
+        apellido: capitalizar(partes[1])
+      };
+    } else if (partes.length === 1) {
+      return {
+        nombre: capitalizar(partes[0]),
+        apellido: 'Digital'
+      };
     }
+
+    return { nombre: 'Cliente', apellido: 'Digital' };
   };
 
-  // Manejador del formulario para productos digitales (Modal de correo de Canva)
-  // 1. Asegúrate de que Supabase esté importado al inicio del archivo[cite: 2]
-// import { supabase } from '../supabaseClient';
+  // Manejo del envío del modal para productos digitales
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-const handleModalSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+    try {
+      const nombreProducto = producto?.nombre || "";
+      const presentacion = variacionSeleccionada?.presentacion || "Única";
+      const precioUsd = variacionSeleccionada?.precio_venta || 0;
+      const variationId = variacionSeleccionada?.id || (variaciones.length > 0 ? variaciones[0].id : null);
 
-  try {
-    const nombreProducto = producto?.nombre || "";
-    const presentacion = variacionSeleccionada?.presentacion || "Única";
-    const precio = variacionSeleccionada?.precio_venta || 0;
-    const variationId = variacionSeleccionada?.id || (variaciones.length > 0 ? variaciones[0].id : null);
+      // Conversión exacta a Bolívares
+      const precioBs = (Number(precioUsd) * Number(tasaCambio)).toFixed(2);
 
-    let clienteId = null;
+      // 1. Buscar o Registrar Cliente con nombre derivado del correo
+      let clienteId = null;
 
-    // 1. BUSCAR SI EL CLIENTE YA EXISTE POR CORREO
-    const { data: clientesExistentes, error: searchError } = await supabase
-      .from('clientes')
-      .select('id')
-      .eq('correo', email)
-      .limit(1);
-
-    if (searchError) throw searchError;
-
-    if (clientesExistentes && clientesExistentes.length > 0) {
-      clienteId = clientesExistentes[0].id;
-    } else {
-      // 2. CREAR EL CLIENTE CUMPLIENDO EL ESQUEMA NOT NULL Y LOS ENUMS
-      // NOTA: Ajusta 'pagina_web' y 'Caracas' según los valores válidos de tu Enum en Supabase
-      const { data: nuevoCliente, error: errCliente } = await supabase
+      const { data: clientesExistentes, error: searchError } = await supabase
         .from('clientes')
+        .select('id')
+        .eq('correo', email)
+        .limit(1);
+
+      if (searchError) throw searchError;
+
+      if (clientesExistentes && clientesExistentes.length > 0) {
+        clienteId = clientesExistentes[0].id;
+      } else {
+        const { nombre: nombreExtraido, apellido: apellidoExtraido } = extraerNombreDeCorreo(email);
+
+        const { data: nuevoCliente, error: errCliente } = await supabase
+          .from('clientes')
+          .insert([
+            {
+              nombre: nombreExtraido,
+              apellido: apellidoExtraido,
+              telefono: '00000000000',
+              correo: email,
+              origen: 'pagina_web',
+              ubicacion: 'Caracas'
+            }
+          ])
+          .select()
+          .single();
+
+        if (errCliente) throw errCliente;
+        clienteId = nuevoCliente.id;
+      }
+
+      // 2. Registrar Pedido
+      const { data: pedido, error: errPedido } = await supabase
+        .from('pedidos')
         .insert([
           {
-            nombre: 'Cliente',
-            apellido: 'Digital',
-            telefono: '00000000000', // Cumple con NOT NULL text
-            correo: email,
-            origen: 'pagina_web',    // Debe coincidir con el ENUM 'origen'
-            ubicacion: 'Caracas'     // Debe coincidir con el ENUM 'ubicacion'
+            cliente_id: clienteId,
+            estado: 'pendiente',
+            total_pedido: precioUsd
           }
         ])
         .select()
         .single();
 
-      if (errCliente) throw errCliente;
-      clienteId = nuevoCliente.id;
-    }
+      if (errPedido) throw errPedido;
 
-    // 3. REGISTRAR PEDIDO
-    const { data: pedido, error: errPedido } = await supabase
-      .from('pedidos')
-      .insert([
-        {
-          cliente_id: clienteId,
-          estado: 'pendiente',
-          total_pedido: precio
-        }
-      ])
-      .select()
-      .single();
+      // 3. Registrar Ítem de Pedido
+      if (variationId) {
+        const { error: errItem } = await supabase
+          .from('pedido_items')
+          .insert([
+            {
+              pedido_id: pedido.id,
+              variation_id: variationId,
+              cantidad: 1,
+              precio_unitario: precioUsd
+            }
+          ]);
 
-    if (errPedido) throw errPedido;
+        if (errItem) throw errItem;
+      }
 
-    // 4. REGISTRAR ITEM EN PEDIDO_ITEMS
-    if (variationId) {
-      const { error: errItem } = await supabase
-        .from('pedido_items')
+      // 4. Registrar Venta
+      const { error: errVenta } = await supabase
+        .from('ventas')
         .insert([
           {
-            pedido_id: pedido.id,
-            variation_id: variationId,
-            cantidad: 1,
-            precio_unitario: precio
+            cliente_id: clienteId,
+            canal: 'tienda_online',
+            total_venta: precioUsd,
+            estado: 'pendiente'
           }
         ]);
 
-      if (errItem) throw errItem;
+      if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
+
+      // 5. Generar Mensaje de WhatsApp mostrando ÚNICAMENTE el monto en Bolívares
+      const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
+      
+      const mensajeDigital = 
+        `¡Hola Textiprint! 👋✨\n\n` +
+        `Adquirí un recurso digital desde la web.\n\n` +
+        `📦 *Orden:* #${numeroOrden}\n` +
+        `💻 *Recurso Digital:* ${nombreProducto}\n` +
+        `🎨 *Presentación:* ${presentacion}\n` +
+        `💰 *Monto a cancelar:* Bs. ${precioBs}\n` +
+        `📧 *Correo de Canva:* ${email}\n\n` +
+        `Adjunto mi comprobante de pago para la activación.`;
+
+      const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
+      
+      window.open(urlWhatsApp, '_blank');
+      setShowDigitalModal(false);
+
+    } catch (error) {
+      console.error('Error al procesar la orden digital:', error);
+      alert(`Ocurrió un detalle al guardar la orden: ${error.message || 'Intente nuevamente'}`);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // 5. REGISTRAR EN VENTAS
-    const { error: errVenta } = await supabase
-      .from('ventas')
-      .insert([
-        {
-          cliente_id: clienteId,
-          canal: 'tienda_online', // Debe coincidir con el ENUM 'canal'
-          total_venta: precio,
-          estado: 'pendiente'
-        }
-      ]);
+  // Botón de acción principal
+  const handleAccionCompra = () => {
+    if (producto?.tipo === 'digital') {
+      setShowDigitalModal(true);
+    } else {
+      navigate(`/hacer-pedido?productoId=${producto?.id}&variationId=${variacionSeleccionada?.id}`);
+    }
+  };
 
-    if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
-
-    // 6. REDIRECCIÓN A WHATSAPP
-    const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
-    const telefonoWhatsApp = "584142467351";
-    
-    const mensajeDigital = 
-      `¡Hola Textiprint! 👋✨\n\n` +
-      `Adquirí un recurso digital desde la web.\n\n` +
-      `📦 *Orden:* #${numeroOrden}\n` +
-      `💻 *Recurso Digital:* ${nombreProducto}\n` +
-      `🎨 *Presentación:* ${presentacion}\n` +
-      `💰 *Monto:* $${Number(precio).toFixed(2)} USD\n` +
-      `📧 *Correo de Canva:* ${email}\n\n` +
-      `Adjunto mi comprobante para la activación.`;
-
-    const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
-    
-    window.open(urlWhatsApp, '_blank');
-    setShowDigitalModal(false);
-
-  } catch (error) {
-    console.error('Error detallado:', error);
-    alert(`Error de Supabase: ${error.message || JSON.stringify(error)}`);
-  } finally {
-    setLoading(false);
+  if (loading && !producto) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Cargando producto...</div>;
   }
-};
+
+  if (!producto) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}>Producto no encontrado.</div>;
+  }
+
+  const precioActualUsd = variacionSeleccionada?.precio_venta || 0;
+  const precioActualBs = (precioActualUsd * tasaCambio).toFixed(2);
+
+  ret
   return (
     <div className="detail-container">
       {/* Botón superior de retorno */}
