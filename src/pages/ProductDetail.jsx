@@ -13,9 +13,10 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [tasaCambio, setTasaCambio] = useState(1);
 
-  // Estados del Modal Digital
+  // Estados del Modal Digital y Galería
   const [showDigitalModal, setShowDigitalModal] = useState(false);
   const [email, setEmail] = useState('');
+  const [currentMainImage, setCurrentMainImage] = useState('');
 
   // Teléfono configurado para WhatsApp
   const telefonoWhatsApp = "584142467351";
@@ -35,6 +36,11 @@ export default function ProductDetail() {
 
         if (prodError) throw prodError;
         setProducto(prodData);
+
+        // Establecer imagen principal inicial
+        if (prodData?.imagen_url) {
+          setCurrentMainImage(prodData.imagen_url);
+        }
 
         // 2. Obtener variaciones del producto
         const { data: varData, error: varError } = await supabase
@@ -102,9 +108,6 @@ export default function ProductDetail() {
       const presentacion = variacionSeleccionada?.presentacion || "Única";
       const precioUsd = variacionSeleccionada?.precio_venta || 0;
       const variationId = variacionSeleccionada?.id || (variaciones.length > 0 ? variaciones[0].id : null);
-
-      // Conversión exacta a Bolívares
-      const precioBs = (Number(precioUsd) * Number(tasaCambio)).toFixed(2);
 
       // 1. Buscar o Registrar Cliente con nombre derivado del correo
       let clienteId = null;
@@ -187,21 +190,18 @@ export default function ProductDetail() {
       if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
 
       // 5. Generar Mensaje de WhatsApp mostrando ÚNICAMENTE el monto en Bolívares
-      const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
-      
-      // Formatear el precio a estilo de moneda venezolana (ej: 2.730,00)
-const precioFormateado = (Number(precioUsd) * Number(tasaCambio)).toLocaleString('es-VE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
+      const precioFormateado = (Number(precioUsd) * Number(tasaCambio)).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
 
-const mensajeDigital = 
-  `¡Hola Textiprint! 👋 Hice un pedido desde la web.\n\n` +
-  `💻 *Recurso Digital:* ${nombreProducto}\n` +
-  `🎨 *Presentación:* ${presentacion}\n` +
-  `💰 *Monto a pagar:* Bs. ${precioFormateado}\n` +
-  `📧 *Correo de Canva:* ${email}\n\n` +
-  `Adjunto mi comprobante de pago para la activación. ✨`;
+      const mensajeDigital = 
+        `¡Hola Textiprint! 👋 Hice un pedido desde la web.\n\n` +
+        `💻 *Recurso Digital:* ${nombreProducto}\n` +
+        `🎨 *Presentación:* ${presentacion}\n` +
+        `💰 *Monto a pagar:* Bs. ${precioFormateado}\n` +
+        `📧 *Correo de Canva:* ${email}\n\n` +
+        `Adjunto mi comprobante de pago para la activación. ✨`;
 
       const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
       
@@ -217,7 +217,7 @@ const mensajeDigital =
   };
 
   // Botón de acción principal
-  const handleAccionCompra = () => {
+  const handleAction = () => {
     if (producto?.tipo === 'digital') {
       setShowDigitalModal(true);
     } else {
@@ -233,10 +233,26 @@ const mensajeDigital =
     return <div style={{ padding: '20px', textAlign: 'center' }}>Producto no encontrado.</div>;
   }
 
+  // Variables derivadas para renderizado
+  const isDigital = producto?.tipo === 'digital';
+  const tasa = Number(tasaCambio) || 1;
   const precioActualUsd = variacionSeleccionada?.precio_venta || 0;
-  const precioActualBs = (precioActualUsd * tasaCambio).toFixed(2);
+  const vesCalculado = Number(precioActualUsd) * tasa;
+  const precioFormateadoBs = `Bs. ${vesCalculado.toLocaleString('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
 
-  ret
+  // Lista unificada de imágenes
+  const allImages = [
+    producto?.imagen_url,
+    ...(Array.isArray(producto?.imagenes_secundarias) ? producto.imagenes_secundarias : [])
+  ].filter(Boolean);
+
+  const setActiveImg = (imgUrl) => {
+    setCurrentMainImage(imgUrl);
+  };
+
   return (
     <div className="detail-container">
       {/* Botón superior de retorno */}
@@ -246,9 +262,7 @@ const mensajeDigital =
 
       <div className="detail-layout">
         
-        {/* ==========================================
-            COLUMNA IZQUIERDA: GALERÍA COMPLETA
-           ========================================== */}
+        {/* COLUMNA IZQUIERDA: GALERÍA COMPLETA */}
         <div className="detail-gallery-col">
           <div className="main-image-container">
             {currentMainImage ? (
@@ -276,9 +290,7 @@ const mensajeDigital =
           )}
         </div>
 
-        {/* ==========================================
-            COLUMNA DERECHA: INFORMACIÓN DEL RECURSO
-           ========================================== */}
+        {/* COLUMNA DERECHA: INFORMACIÓN DEL RECURSO */}
         <div className="detail-info-col">
           <span className="product-tag" style={{ color: isDigital ? 'var(--color-vivid-magenta)' : 'var(--color-vivid-pink)' }}>
             {isDigital ? 'Recurso de Edición Digital' : 'Papelería Física Textiprint'}
