@@ -189,15 +189,19 @@ export default function ProductDetail() {
       // 5. Generar Mensaje de WhatsApp mostrando ÚNICAMENTE el monto en Bolívares
       const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
       
-      const mensajeDigital = 
-        `¡Hola Textiprint! 👋✨\n\n` +
-        `Adquirí un recurso digital desde la web.\n\n` +
-        `📦 *Orden:* #${numeroOrden}\n` +
-        `💻 *Recurso Digital:* ${nombreProducto}\n` +
-        `🎨 *Presentación:* ${presentacion}\n` +
-        `💰 *Monto a cancelar:* Bs. ${precioBs}\n` +
-        `📧 *Correo de Canva:* ${email}\n\n` +
-        `Adjunto mi comprobante de pago para la activación.`;
+      // Formatear el precio a estilo de moneda venezolana (ej: 2.730,00)
+const precioFormateado = (Number(precioUsd) * Number(tasaCambio)).toLocaleString('es-VE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+const mensajeDigital = 
+  `¡Hola Textiprint! 👋 Hice un pedido desde la web.\n\n` +
+  `💻 *Recurso Digital:* ${nombreProducto}\n` +
+  `🎨 *Presentación:* ${presentacion}\n` +
+  `💰 *Monto a pagar:* Bs. ${precioFormateado}\n` +
+  `📧 *Correo de Canva:* ${email}\n\n` +
+  `Adjunto mi comprobante de pago para la activación. ✨`;
 
       const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
       
