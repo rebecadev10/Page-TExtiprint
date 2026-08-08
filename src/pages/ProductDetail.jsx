@@ -122,26 +122,131 @@ export default function ProductDetail() {
   };
 
   // Manejador del formulario para productos digitales (Modal de correo de Canva)
-  const handleModalSubmit = (e) => {
-    e.preventDefault();
-    
+  // 1. Asegúrate de que Supabase esté importado al inicio del archivo[cite: 2]
+// import { supabase } from '../supabaseClient';
+
+const handleModalSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true); // O un estado para deshabilitar el botón si lo tienes
+
+  try {
     const nombreProducto = producto?.nombre || "";
     const presentacion = variacionSeleccionada?.presentacion || "Única";
+    const precio = variacionSeleccionada?.precio_venta || 0;
 
-    // Construcción del mensaje para WhatsApp mostrando el monto exacto en Bs.
-    const mensajeDigital = `¡Hola Textiprint! 👋 Hice un pedido desde la web.\n\n` +
+    // ------------------------------------------------------------------
+    // 1. REGISTRAR O BUSCAR CLIENTE (Guardamos su correo de Canva)
+    // ------------------------------------------------------------------
+    let clienteId = null;
+
+    // Buscamos si el correo de Canva ya existe en la tabla clientes
+    const { data: clientesExistentes } = await supabase
+      .from('clientes')
+      .select('id')
+      .eq('correo', email)
+      .limit(1);
+
+    if (clientesExistentes && clientesExistentes.length > 0) {
+      clienteId = clientesExistentes[0].id;
+    } else {
+      // Creamos el registro del cliente con su correo de Canva
+      const { data: nuevoCliente, error: errCliente } = await supabase
+        .from('clientes')
+        .insert([
+          {
+            nombre: 'Cliente',
+            apellido: 'Digital',
+            telefono: 'Sin teléfono', // Puedes agregar un input de teléfono si lo deseas
+            correo: email,           // Guardamos el correo ingresado en el modal
+            origen: 'web',            // Ajusta según los valores permitidos de tu Enum
+            ubicacion: 'digital'      // Ajusta según los valores permitidos de tu Enum
+          }
+        ])
+        .select()
+        .single();
+
+      if (errCliente) throw errCliente;
+      clienteId = nuevoCliente.id;
+    }
+
+    // ------------------------------------------------------------------
+    // 2. CREAR EL PEDIDO DIGITAL
+    // ------------------------------------------------------------------
+    const { data: pedido, error: errPedido } = await supabase
+      .from('pedidos')
+      .insert([
+        {
+          cliente_id: clienteId,
+          estado: 'pendiente',
+          total_pedido: precio
+        }
+      ])
+      .select()
+      .single();
+
+    if (errPedido) throw errPedido;
+
+    // ------------------------------------------------------------------
+    // 3. REGISTRAR LA VARIACIÓN / PLANTILLA VENDIDA
+    // ------------------------------------------------------------------
+    if (variacionSeleccionada?.id) {
+      const { error: errItem } = await supabase
+        .from('pedido_items')
+        .insert([
+          {
+            pedido_id: pedido.id,
+            variation_id: variacionSeleccionada.id,
+            cantidad: 1,
+            precio_unitario: precio
+          }
+        ]);
+
+      if (errItem) throw errItem;
+    }
+
+    // ------------------------------------------------------------------
+    // 4. REGISTRAR LA VENTA EN EL MÓDULO CONTABLE
+    // ------------------------------------------------------------------
+    const { error: errVenta } = await supabase
+      .from('ventas')
+      .insert([
+        {
+          cliente_id: clienteId,
+          canal: 'web',
+          total_venta: precio,
+          estado: 'pendiente'
+        }
+      ]);
+
+    if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
+
+    // ------------------------------------------------------------------
+    // 5. REDIRIGIR A WHATSAPP
+    // ------------------------------------------------------------------
+    const numeroOrden = pedido.id.slice(0, 8).toUpperCase();
+    const mensajeDigital = 
+      `¡Hola Textiprint! 👋✨\n\n` +
+      `Adquirí un recurso digital desde la web.\n\n` +
+      `📦 *Orden:* #${numeroOrden}\n` +
       `💻 *Recurso Digital:* ${nombreProducto}\n` +
       `🎨 *Presentación:* ${presentacion}\n` +
-      `💰 *Monto a pagar:* ${precioFormateadoBs}\n` +
+      `💰 *Monto:* $${Number(precio).toFixed(2)} USD\n` +
       `📧 *Correo de Canva:* ${email}\n\n` +
-      `Adjunto mi comprobante de pago para la activación. ✨`;
+      `Adjunto mi comprobante de pago para la activación.`;
 
     const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
-    
     window.open(urlWhatsApp, '_blank');
     setShowDigitalModal(false);
-  };
 
+  } catch (error) {
+    console.error('Error al guardar pedido digital:', error.message);
+    alert('Ocurrió un detalle al guardar la orden, pero iniciaremos tu consulta por WhatsApp.');
+    
+    // De todos modos abrimos WhatsApp por respaldo
+    const mensajeFallback = `¡Hola Textiprint! Quiero la plantilla: ${producto?.nombre} ($${variacionSeleccionada?.precio_venta} USD) para el correo: ${email}`;
+    window.open(`https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeFallback)}`, '_blank');
+  }
+};
   return (
     <div className="detail-container">
       {/* Botón superior de retorno */}

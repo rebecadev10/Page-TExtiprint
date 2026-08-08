@@ -139,7 +139,7 @@ export default function ShopDigital() {
                   </button>
                   
                   <button 
-                    onClick={() => handleOpenModal(temp)} 
+                    onClick={() => navigate(`/producto/${temp.id}`)} 
                     style={{ backgroundColor: isFree ? colors.vividMagenta : colors.purple, color: 'white', border: 'none', padding: '11px 20px', borderRadius: '25px', cursor: 'pointer', width: '100%', fontWeight: 'bold', fontSize: '0.9rem' }}
                   >
                     {isFree ? 'Obtener Gratis' : 'Comprar Ahora'}
