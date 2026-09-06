@@ -7,6 +7,8 @@ import ShopDigital from './pages/ShopDigital';
 import ProductDetail from './pages/ProductDetail';
 import PedidoForm from './components/PedidoForm'; // <-- 1. IMPORTA TU FORMULARIO AQUÍ
 import AboutUs from './components/AboutUs';
+import NotFound from './pages/NotFound';
+
 export default function App() {
   return (
     <Router>
@@ -17,8 +19,11 @@ export default function App() {
           <Route path="tienda-fisica" element={<ShopPhysical />} />
           <Route path="plantillas-digitales" element={<ShopDigital />} />
           <Route path="producto/:id" element={<ProductDetail />} />
-          <Route path="pedido" element={<PedidoForm />} /> {/* <-- 2. AGREGA LA RUTA AQUÍ */}
-          <Route path="/sobre-nosotros" element={<AboutUs />} />
+          <Route path="pedido" element={<PedidoForm />} />
+          <Route path="hacer-pedido" element={<PedidoForm />} /> {/* Alias de compatibilidad */}
+          <Route path="sobre-nosotros" element={<AboutUs />} />
+          {/* Ruta comodín 404 personalizada */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Router>

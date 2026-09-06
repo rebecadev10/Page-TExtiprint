@@ -80,7 +80,7 @@ export default function ProductDetail() {
     if (!correo) return { nombre: 'Cliente', apellido: 'Digital' };
     
     const usuario = correo.split('@')[0];
-    const partes = usuario.split(/[\._\-]/).filter(Boolean);
+    const partes = usuario.split(/[._-]/).filter(Boolean);
     const capitalizar = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
     if (partes.length >= 2) {
@@ -221,7 +221,9 @@ export default function ProductDetail() {
     if (producto?.tipo === 'digital') {
       setShowDigitalModal(true);
     } else {
-      navigate(`/hacer-pedido?productoId=${producto?.id}&variationId=${variacionSeleccionada?.id}`);
+      navigate(`/pedido?productoId=${producto?.id}&variationId=${variacionSeleccionada?.id}`, {
+        state: { producto, variacionSeleccionada }
+      });
     }
   };
 
@@ -266,7 +268,7 @@ export default function ProductDetail() {
         <div className="detail-gallery-col">
           <div className="main-image-container">
             {currentMainImage ? (
-              <img src={currentMainImage} alt={producto.nombre} />
+              <img src={currentMainImage} alt={producto.nombre} decoding="async" />
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: '#f8fafc' }}>
                 Sin imagen de portada
@@ -283,7 +285,7 @@ export default function ProductDetail() {
                   className="thumbnail-item"
                   style={{ border: `2px solid ${currentMainImage === img ? 'var(--color-vivid-pink)' : 'transparent'}` }}
                 >
-                  <img src={img} alt={`Vista secundaria ${index + 1}`} />
+                  <img src={img} alt={`Vista secundaria ${index + 1}`} loading="lazy" decoding="async" />
                 </div>
               ))}
             </div>
@@ -308,10 +310,12 @@ export default function ProductDetail() {
           {/* Menú de Selección de Variantes de Precio */}
           {variaciones.length > 0 && (
             <div style={{ marginBottom: '24px', marginTop: '10px' }}>
-              <label className="modal-label" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+              <label htmlFor="select-variacion-producto" className="modal-label" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                 Selecciona la presentación del producto:
               </label>
               <select 
+                id="select-variacion-producto"
+                aria-label="Seleccionar presentación del producto"
                 value={variacionSeleccionada?.id || ''} 
                 onChange={e => {
                   const selected = variaciones.find(v => v.id === e.target.value);

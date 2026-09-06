@@ -78,17 +78,25 @@ export default function ProductsList() {
 
   if (loading) {
     return (
-      <div className="text-center p-10 text-gray-500">
-        <p className="animate-pulse">Cargando el catálogo de Textiprint...</p>
+      <div className="home-featured-grid">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="featured-item-card skeleton-product-card" style={{ opacity: 0.85 }}>
+            <div className="skeleton-box" style={{ height: '240px', width: '100%', borderRadius: '16px', marginBottom: '14px' }}></div>
+            <div className="skeleton-box" style={{ height: '22px', width: '70%', margin: '0 auto 12px' }}></div>
+            <div className="skeleton-box" style={{ height: '36px', width: '100%', borderRadius: '8px', marginBottom: '12px' }}></div>
+            <div className="skeleton-box" style={{ height: '26px', width: '40%', margin: '0 auto 14px' }}></div>
+            <div className="skeleton-box" style={{ height: '42px', width: '100%', borderRadius: '25px' }}></div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (productos.length === 0) {
     return (
-      <p className="text-center p-5 text-gray-400">
-        Pronto añadiremos productos espectaculares a nuestro catálogo.
-      </p>
+      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#888' }}>
+        <p style={{ fontSize: '1.1rem' }}>Pronto añadiremos productos espectaculares a nuestro catálogo.</p>
+      </div>
     );
   }
 
@@ -113,6 +121,8 @@ export default function ProductsList() {
               <img 
                 src={producto.imagen_url || 'https://via.placeholder.com/300x350?text=Textiprint'} 
                 alt={producto.nombre} 
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
@@ -131,6 +141,7 @@ export default function ProductsList() {
                     value={varianteIdActual || ''} 
                     onChange={(e) => handleVariationChange(producto.id, e.target.value)}
                     className="featured-item-select"
+                    aria-label={`Seleccionar presentación para ${producto.nombre}`}
                   >
                     {producto.product_variations.map((variacion) => (
                       <option key={variacion.id} value={variacion.id}>

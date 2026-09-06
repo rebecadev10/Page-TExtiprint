@@ -18,8 +18,8 @@ export default function Footer() {
             <li><Link to="/">Inicio</Link></li>
             <li><Link to="/tienda-fisica">Papelería Física</Link></li>
             <li><Link to="/plantillas-digitales">Plantillas Canva</Link></li>
-            {/* NUEVO ENLACE A SOBRE NOSOTROS */}
             <li><Link to="/sobre-nosotros">Sobre Nosotros</Link></li>
+            <li><a href="/#preguntas-frecuentes">Preguntas Frecuentes</a></li>
           </ul>
         </div>
 

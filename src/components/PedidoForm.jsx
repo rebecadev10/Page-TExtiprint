@@ -6,8 +6,13 @@ export default function PedidoForm() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Extraemos los datos que vienen desde ProductDetail
-  const { producto, variacionSeleccionada } = location.state || {};
+  // 1. Extraemos los datos que vienen desde state o inicializamos para fallback por URL
+  const stateProducto = location.state?.producto || null;
+  const stateVariacion = location.state?.variacionSeleccionada || null;
+
+  const [producto, setProducto] = useState(stateProducto);
+  const [variacionSeleccionada, setVariacionSeleccionada] = useState(stateVariacion);
+  const [fetchingData, setFetchingData] = useState(!stateProducto || !stateVariacion);
 
   const [loading, setLoading] = useState(false);
   const [tasa, setTasa] = useState(1);
@@ -19,31 +24,75 @@ export default function PedidoForm() {
     ubicacion: ''
   });
 
-  // Redirección de seguridad y carga de tasa BCV
+  // Carga de producto (si recargan la página o entran por URL) y tasa BCV
   useEffect(() => {
-    if (!producto || !variacionSeleccionada) {
-      navigate('/');
-      return;
-    }
-
-    async function obtenerTasa() {
+    async function inicializarPedido() {
       try {
-        const { data, error } = await supabase
+        setFetchingData(true);
+
+        // A. Cargar Tasa BCV
+        const { data: configData } = await supabase
           .from('configuraciones')
           .select('valor')
           .eq('clave', 'tasa_bcv')
           .single();
 
-        if (!error && data) {
-          setTasa(parseFloat(data.valor));
+        if (configData?.valor) {
+          setTasa(parseFloat(configData.valor));
         }
+
+        // B. Si ya tenemos producto y variación desde el state, no requerimos consultar
+        if (stateProducto && stateVariacion) {
+          setProducto(stateProducto);
+          setVariacionSeleccionada(stateVariacion);
+          setFetchingData(false);
+          return;
+        }
+
+        // C. Fallback: buscar por query params en la URL (?productoId=...&variationId=...)
+        const params = new URLSearchParams(location.search);
+        const pId = params.get('productoId');
+        const vId = params.get('variationId');
+
+        if (!pId) {
+          setFetchingData(false);
+          return;
+        }
+
+        // Consultamos el producto
+        const { data: prodData, error: prodErr } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('id', pId)
+          .single();
+
+        if (prodErr || !prodData) {
+          setFetchingData(false);
+          return;
+        }
+
+        // Consultamos las variaciones
+        const { data: varData } = await supabase
+          .from('product_variations')
+          .select('*')
+          .eq('producto_id', pId);
+
+        setProducto(prodData);
+
+        if (varData && varData.length > 0) {
+          const matchedVar = varData.find(v => v.id === vId) || varData[0];
+          setVariacionSeleccionada(matchedVar);
+        }
+
       } catch (err) {
-        console.error('Error al cargar la tasa BCV:', err.message);
+        console.error('Error al inicializar formulario de pedido:', err);
+      } finally {
+        setFetchingData(false);
       }
     }
 
-    obtenerTasa();
-  }, [producto, variacionSeleccionada, navigate]);
+    inicializarPedido();
+  }, [location.search, stateProducto, stateVariacion]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -164,7 +213,38 @@ export default function PedidoForm() {
     }
   };
 
-  if (!producto || !variacionSeleccionada) return null;
+  if (fetchingData) {
+    return (
+      <div className="checkout-container">
+        <div className="checkout-card" style={{ maxWidth: '520px', margin: '40px auto', padding: '40px 30px', textAlign: 'center' }}>
+          <div className="skeleton-box" style={{ width: '60%', height: '28px', margin: '0 auto 20px', borderRadius: '8px' }}></div>
+          <div className="skeleton-box" style={{ width: '90%', height: '50px', margin: '0 auto 25px', borderRadius: '8px' }}></div>
+          <p style={{ color: '#888', fontSize: '0.95rem' }}>Preparando los datos de tu orden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!producto || !variacionSeleccionada) {
+    return (
+      <div className="checkout-container">
+        <div className="checkout-card" style={{ maxWidth: '520px', margin: '40px auto', textAlign: 'center', padding: '45px 25px' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🛍️</div>
+          <h2 style={{ color: 'var(--color-purple, #6f237e)', marginBottom: '10px' }}>No hay un producto seleccionado</h2>
+          <p style={{ color: '#666', marginBottom: '25px', lineHeight: '1.6' }}>
+            Para realizar un pedido, primero elige tu producto favorito en nuestro catálogo.
+          </p>
+          <button 
+            onClick={() => navigate('/tienda-fisica')}
+            className="btn-home-purple"
+            style={{ padding: '12px 30px' }}
+          >
+            Explorar Papelería ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const precioUSD = Number(variacionSeleccionada.precio_venta) || 0;
   const precioVES = precioUSD * tasa;
@@ -233,8 +313,10 @@ export default function PedidoForm() {
           </div>
 
           <div className="form-group">
-            <label className="checkout-label">Ubicación / Dirección de Envío</label>
+            <label htmlFor="checkout-ubicacion" className="checkout-label">Ubicación / Dirección de Envío</label>
             <select 
+              id="checkout-ubicacion"
+              aria-label="Ubicación o dirección de entrega"
               name="ubicacion" 
               required 
               value={formData.ubicacion}

@@ -1,0 +1,6 @@
+# robots.txt para Textiprint en Vercel
+User-agent: *
+Allow: /
+
+# Sitemap oficial para indexación rápida en Googlebot y Bingbot
+Sitemap: https://textiprint.vercel.app/sitemap.xml

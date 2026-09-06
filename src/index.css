@@ -181,7 +181,7 @@ button, input, textarea, select, a {
 .footer-bottom {
   text-align: center;
   padding-top: 20px;
-  color: #777;
+  color: #cbd5e1;
   font-size: 0.85rem;
 }
 
@@ -325,7 +325,7 @@ button, input, textarea, select, a {
 .home-hero-tagline {
   display: inline-block;
   background-color: #fce7f3;
-  color: var(--color-vivid-pink);
+  color: #b80654;
   padding: 6px 14px;
   border-radius: 30px;
   font-size: 0.8rem;
@@ -1438,5 +1438,328 @@ button, input, textarea, select, a {
     margin-top: 5px;
     width: 80%;
     text-align: center;
+  }
+}
+
+/* ==========================================================================
+   SISTEMA DE ANIMACIONES MODERNAS Y SKELETONS (TEXTIPRINT UX VIBRANTE)
+   ========================================================================== */
+
+/* 1. Shimmer & Skeleton Loading */
+@keyframes shimmerAnim {
+  0% { background-position: -250% 0; }
+  100% { background-position: 250% 0; }
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #f5edf5 20%, #ffffff 50%, #f5edf5 80%);
+  background-size: 200% 100%;
+  animation: shimmerAnim 1.6s infinite ease-in-out;
+  border-radius: 8px;
+}
+
+.skeleton-product-card {
+  box-shadow: 0 4px 15px rgba(111, 35, 126, 0.04);
+  border: 1px solid #f1e9f0 !important;
+  background-color: #ffffff;
+}
+
+/* 2. Suaves transiciones de entrada de página */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-wrapper, 
+.shop-container, 
+.detail-container, 
+.about-container, 
+.checkout-container, 
+.not-found-wrapper {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* 3. Micro-interacciones dinámicas en Tarjetas */
+.featured-item-card {
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid #f0e6ed !important;
+  box-shadow: 0 6px 20px rgba(111, 35, 126, 0.04) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer;
+}
+
+.featured-item-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 16px 36px rgba(111, 35, 126, 0.12) !important;
+  border-color: #e6b8d8 !important;
+}
+
+.featured-item-img-box img {
+  transition: transform 0.45s ease !important;
+}
+
+.featured-item-card:hover .featured-item-img-box img {
+  transform: scale(1.05);
+}
+
+.product-card, 
+.digital-card-hover, 
+.physical-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-radius: 16px !important;
+}
+
+.product-card:hover, 
+.digital-card-hover:hover, 
+.physical-card-hover:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: 0 18px 36px rgba(111, 35, 126, 0.12) !important;
+  border-color: var(--color-vivid-pink) !important;
+}
+
+.service-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.service-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  box-shadow: 0 16px 32px rgba(111, 35, 126, 0.1) !important;
+}
+
+/* 4. Efectos de Botones con Micro-rebote */
+button, .btn-hero-primary, .btn-home-purple, .btn-action-main, .btn-cta-whatsapp, .btn-checkout-submit {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-hero-primary:hover, 
+.btn-home-purple:hover, 
+.btn-action-main:hover, 
+.btn-cta-whatsapp:hover, 
+.btn-checkout-submit:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 22px rgba(111, 35, 126, 0.22);
+}
+
+.btn-hero-primary:active, 
+.btn-home-purple:active, 
+.btn-action-main:active, 
+.btn-cta-whatsapp:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* 5. Botón Flotante de WhatsApp para conversión inmediata */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+.floating-whatsapp {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background-color: #25D366;
+  color: #ffffff;
+  border-radius: 50px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.35);
+  z-index: 999;
+  animation: pulseGlow 2.5s infinite;
+  transition: transform 0.25s ease;
+}
+
+.floating-whatsapp:hover {
+  transform: scale(1.06) translateY(-2px);
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .floating-whatsapp span {
+    display: none;
+  }
+  .floating-whatsapp {
+    padding: 14px;
+    border-radius: 50%;
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+/* ==========================================================================
+   SECCIÓN PREGUNTAS FRECUENTES (FAQ ACORDEÓN)
+   ========================================================================== */
+.faq-section {
+  padding: 80px 20px;
+  background-color: var(--color-white-pure);
+  border-top: 1px solid #f1e6ec;
+}
+
+.faq-container {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.faq-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  color: var(--color-purple);
+  margin: 8px 0 12px 0;
+}
+
+.faq-subtitle {
+  font-size: 1.05rem;
+  color: #666;
+  max-width: 580px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.faq-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faq-item {
+  background-color: #ffffff;
+  border: 1.5px solid #ecdde8;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(111, 35, 126, 0.02);
+}
+
+.faq-item:hover {
+  border-color: #dab5d1;
+  box-shadow: 0 8px 25px rgba(111, 35, 126, 0.06);
+  transform: translateY(-2px);
+}
+
+.faq-item.faq-item-open {
+  border-color: var(--color-purple);
+  border-left: 6px solid var(--color-purple);
+  box-shadow: 0 10px 30px rgba(111, 35, 126, 0.08);
+}
+
+.faq-question-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e1e1e;
+  gap: 15px;
+}
+
+.faq-question-btn:hover {
+  color: var(--color-purple);
+}
+
+.faq-question-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.faq-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background-color: #fbf2ff;
+  color: var(--color-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-icon-rotated {
+  transform: rotate(180deg);
+  background-color: var(--color-purple);
+  color: #ffffff;
+}
+
+.faq-answer-wrapper {
+  padding: 0 24px 22px 24px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.faq-answer-text {
+  font-size: 0.98rem;
+  line-height: 1.75;
+  color: #4b444a;
+  margin: 0;
+}
+
+.faq-footer-note {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 1rem;
+  color: #555;
+  padding: 16px;
+  background-color: #fff7fb;
+  border-radius: 50px;
+  border: 1px dashed #f1d5e6;
+}
+
+.faq-contact-link {
+  color: var(--color-purple);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 2px solid var(--color-yellow);
+  transition: color 0.2s ease;
+}
+
+.faq-contact-link:hover {
+  color: var(--color-vivid-pink);
+}
+
+@media (max-width: 600px) {
+  .faq-section {
+    padding: 60px 16px;
+  }
+  .faq-title {
+    font-size: 1.8rem;
+  }
+  .faq-question-btn {
+    padding: 16px 18px;
+    font-size: 0.95rem;
+  }
+  .faq-answer-wrapper {
+    padding: 0 18px 18px 18px;
+  }
+  .faq-footer-note {
+    border-radius: 20px;
   }
 }

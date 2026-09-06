@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import logoTextiprint from '../assets/logo.png'; 
+import logoTextiprint from '../assets/logo.webp'; 
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,7 +18,7 @@ export default function Navbar() {
     <nav className="navbar">
       {/* LOGO E IDENTIDAD */}
       <Link to="/" className="nav-logo-link" onClick={closeMenu}>
-        <img src={logoTextiprint} alt="Logo Textiprint" className="nav-logo-img" />
+        <img src={logoTextiprint} alt="Logo Textiprint" className="nav-logo-img" width="40" height="40" />
         <span className="nav-brand-name">Textiprint</span>
       </Link>
 

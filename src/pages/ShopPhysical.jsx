@@ -49,15 +49,24 @@ export default function ShopPhysical() {
     <div className="shop-container">
       <div className="shop-header" style={{ textAlign: 'center', marginBottom: '40px', marginTop: '30px' }}>
         <h1 className="shop-title" style={{ color: 'var(--color-purple)', fontSize: '2.5rem', marginBottom: '10px' }}>
-          Papelería Artesanal y Creativa
+          Papelería Creativa &amp; Artesanal
         </h1>
-        <p className="shop-subtitle" style={{ color: '#555', maxWidth: '600px', margin: '0 auto' }}>
-          Piezas físicas diseñadas y elaboradas con el mayor cuidado. Perfectas para regalos, organización personal o corporativa.
+        <p className="shop-subtitle" style={{ color: '#555', maxWidth: '650px', margin: '0 auto' }}>
+          Cake toppers 3D, fotos tipo polaroid, libretas y piezas personalizadas elaboradas con el mayor cuidado en Venezuela. Ideales para fiestas, recuerdos y regalos especiales.
         </p>
       </div>
 
       {loading ? (
-        <p className="text-loading" style={{ textAlign: 'center', padding: '40px' }}>Cargando catálogo físico...</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '30px', maxWidth: '1200px', margin: '0 auto', paddingBottom: '60px' }}>
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="skeleton-product-card" style={{ width: '280px', borderRadius: '12px', padding: '16px', background: '#fff', border: '1px solid #eee' }}>
+              <div className="skeleton-box" style={{ height: '240px', borderRadius: '8px', marginBottom: '15px' }}></div>
+              <div className="skeleton-box" style={{ height: '22px', width: '75%', margin: '0 auto 12px' }}></div>
+              <div className="skeleton-box" style={{ height: '24px', width: '45%', margin: '0 auto 20px' }}></div>
+              <div className="skeleton-box" style={{ height: '40px', borderRadius: '25px' }}></div>
+            </div>
+          ))}
+        </div>
       ) : productos.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#777', padding: '60px' }}>
           <p style={{ fontSize: '1.2rem' }}>Próximamente añadiremos nuestro inventario físico disponible.</p>
@@ -72,10 +81,12 @@ export default function ShopPhysical() {
             const precioVES = precioMinimoUSD * tasa;
 
             return (
-              <div key={prod.id} className="product-card" style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', backgroundColor: '#ffffff', boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={prod.id} className="product-card physical-card-hover" style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', backgroundColor: '#ffffff', boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <img 
                   src={prod.imagen_url || 'https://via.placeholder.com/240'} 
                   alt={prod.nombre} 
+                  loading="lazy"
+                  decoding="async"
                   style={{ width: '100%', borderRadius: '8px', height: '240px', objectFit: 'cover' }} 
                 />
                 

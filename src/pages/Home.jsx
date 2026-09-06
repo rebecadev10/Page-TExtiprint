@@ -1,12 +1,13 @@
 import React from 'react';
 import ProductsList from '../components/Products';
-import Hero1 from '../assets/Hero1.png';
+import FAQ from '../components/FAQ';
+import Hero1 from '../assets/Hero1.webp';
 
-// 📸 Importa tus imágenes desde la carpeta assets (o actualiza los nombres según tus archivos)
-import topperImg from '../assets/Topper.png';
-import canvaImg from '../assets/plantillas.png';
-import etiquetasImg from '../assets/etiqueta.png';
-import corporativoImg from '../assets/Tarjetas.png';
+// 📸 Imágenes optimizadas en WebP para máxima velocidad
+import topperImg from '../assets/Topper.webp';
+import canvaImg from '../assets/plantillas.webp';
+import etiquetasImg from '../assets/etiqueta.webp';
+import corporativoImg from '../assets/Tarjetas.webp';
 
 export default function Home() {
   const handleScrollToSection = (id) => {
@@ -18,8 +19,8 @@ export default function Home() {
 
   const services = [
     { 
-      title: 'Cake Toppers & Papelería de Fiesta', 
-      desc: 'Diseños multicapa 3D y temáticos personalizados en corte fino para hacer brillar tus tortas y celebraciones especiales.', 
+      title: 'Cake Toppers & Recuerdos Polaroid', 
+      desc: 'Diseños multicapa 3D, fotos tipo polaroid y papelería personalizada en corte fino para hacer brillar tus tortas y celebraciones especiales.', 
       className: 'bg-pastel-purple',
       img: topperImg
     },
@@ -62,7 +63,7 @@ export default function Home() {
             </h1>
             
             <p className="home-hero-desc">
-              Creamos recursos digitales y piezas físicas pensadas para inspirar puro orden y alegría en tus días.
+              Diseño y <strong>papelería creativa en Venezuela</strong>: Cake toppers 3D, fotos tipo polaroid, kits escolares y plantillas de Canva para llenar de alegría cada detalle.
             </p>
             
             <div className="home-hero-buttons">
@@ -86,6 +87,10 @@ export default function Home() {
                 src={Hero1} 
                 alt="Colección Exclusiva Textiprint Showcase" 
                 className="hero-showcase-img"
+                width="540"
+                height="432"
+                fetchPriority="high"
+                decoding="async"
                 onError={(e) => {
                   e.target.src = "https://placehold.co/540x400/fdf2f8/db2777?text=Textiprint+Creative+✨";
                 }}
@@ -118,6 +123,10 @@ export default function Home() {
                     src={service.img} 
                     alt={service.title} 
                     className="service-card-img"
+                    width="240"
+                    height="240"
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       e.target.style.display = 'none'; // Se oculta limpio si no encuentra la imagen
                     }}
@@ -135,7 +144,10 @@ export default function Home() {
         <ProductsList />
       </section>
 
-      {/* 4. BANNER INFERIOR DE CONVERSIÓN */}
+      {/* 4. PREGUNTAS FRECUENTES (FAQ) */}
+      <FAQ />
+
+      {/* 5. BANNER INFERIOR DE CONVERSIÓN */}
       <section className="home-cta-section">
         <div className="cta-box-dark">
           <div className="cta-text-side">

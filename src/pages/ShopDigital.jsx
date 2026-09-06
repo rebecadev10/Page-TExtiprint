@@ -95,7 +95,16 @@ export default function ShopDigital() {
       </div>
 
       {loading ? (
-        <p className="text-loading" style={{ textAlign: 'center' }}>Cargando plantillas de Canva...</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '30px', maxWidth: '1200px', margin: '0 auto' }}>
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="skeleton-product-card" style={{ width: '280px', borderRadius: '12px', padding: '16px', background: '#fff', border: '1px solid #eee' }}>
+              <div className="skeleton-box" style={{ height: '240px', borderRadius: '8px', marginBottom: '15px' }}></div>
+              <div className="skeleton-box" style={{ height: '22px', width: '75%', margin: '0 auto 12px' }}></div>
+              <div className="skeleton-box" style={{ height: '24px', width: '45%', margin: '0 auto 20px' }}></div>
+              <div className="skeleton-box" style={{ height: '40px', borderRadius: '25px' }}></div>
+            </div>
+          ))}
+        </div>
       ) : productos.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#777', padding: '40px' }}>
           <p style={{ fontSize: '1.2rem' }}>Próximamente añadiremos nuestras plantillas editables.</p>
@@ -109,10 +118,12 @@ export default function ShopDigital() {
             const isFree = precioMinimoUSD === 0;
 
             return (
-              <div key={temp.id} style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', textAlign: 'center', backgroundColor: colors.whitePure, boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
+              <div key={temp.id} className="digital-card-hover" style={{ border: '1px solid #e2dbdd', borderRadius: '12px', padding: '16px', width: '280px', textAlign: 'center', backgroundColor: colors.whitePure, boxShadow: '0 4px 15px rgba(111,35,126,0.03)', display: 'flex', flexDirection: 'column' }}>
                 <img 
                   src={temp.imagen_url || 'https://via.placeholder.com/240'} 
                   alt={temp.nombre} 
+                  loading="lazy"
+                  decoding="async"
                   style={{ width: '100%', borderRadius: '8px', height: '240px', objectFit: 'cover' }} 
                 />
                 <h3 style={{ fontSize: '1.2rem', margin: '15px 0 10px 0', color: colors.purple, fontWeight: 'bold' }}>
@@ -139,7 +150,7 @@ export default function ShopDigital() {
                   </button>
                   
                   <button 
-                    onClick={() => navigate(`/producto/${temp.id}`)} 
+                    onClick={() => handleOpenModal(temp)} 
                     style={{ backgroundColor: isFree ? colors.vividMagenta : colors.purple, color: 'white', border: 'none', padding: '11px 20px', borderRadius: '25px', cursor: 'pointer', width: '100%', fontWeight: 'bold', fontSize: '0.9rem' }}
                   >
                     {isFree ? 'Obtener Gratis' : 'Comprar Ahora'}
