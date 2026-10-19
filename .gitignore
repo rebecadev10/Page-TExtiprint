@@ -20,5 +20,10 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+
+# Textiprint WhatsApp Agent (sesión, dependencias y secretos)
+agent/node_modules/
+agent/.env
+agent/auth_info_baileys/
+agent/*.log

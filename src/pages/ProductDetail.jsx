@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useCart } from '../context/CartContext';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   // Estados del producto
   const [producto, setProducto] = useState(null);
@@ -216,14 +218,31 @@ export default function ProductDetail() {
     }
   };
 
-  // Botón de acción principal
+  // Manejo de acciones de compra y carrito
+  const handleAddToCart = () => {
+    if (!variacionSeleccionada && variaciones.length > 0) {
+      alert('Por favor selecciona una presentación.');
+      return;
+    }
+    const varToUse = variacionSeleccionada || { id: 'default', presentacion: 'Estándar', precio_venta: producto?.precio || 0 };
+    addToCart(producto, varToUse, 1);
+  };
+
+  const handleBuyNow = () => {
+    if (!variacionSeleccionada && variaciones.length > 0) {
+      alert('Por favor selecciona una presentación.');
+      return;
+    }
+    const varToUse = variacionSeleccionada || { id: 'default', presentacion: 'Estándar', precio_venta: producto?.precio || 0 };
+    addToCart(producto, varToUse, 1);
+    navigate('/pedido');
+  };
+
   const handleAction = () => {
     if (producto?.tipo === 'digital') {
       setShowDigitalModal(true);
     } else {
-      navigate(`/pedido?productoId=${producto?.id}&variationId=${variacionSeleccionada?.id}`, {
-        state: { producto, variacionSeleccionada }
-      });
+      handleAddToCart();
     }
   };
 
@@ -301,39 +320,70 @@ export default function ProductDetail() {
           <h1 className="detail-title">{producto.nombre}</h1>
           
           {/* Precio Principal en Bolívares */}
-          <div className="detail-price-box">
-            <span style={{ color: 'var(--color-purple)' }}>{precioFormateadoBs}</span>
+          <div className="detail-price-hero">
+            <div className="detail-price-main-row">
+              <span className="price-bs-large">{precioFormateadoBs}</span>
+            </div>
+            <div className="price-bcv-row">
+              <span className="price-bcv-tag">Tasa oficial BCV</span>
+              {variacionSeleccionada && (
+                <span className="price-selected-label">
+                  • {variacionSeleccionada.presentacion}
+                </span>
+              )}
+            </div>
           </div>
 
           <p className="detail-desc">{producto.descripcion}</p>
 
-          {/* Menú de Selección de Variantes de Precio */}
+          {/* Selector de Variantes con Cards / Cuadritos Interactivos */}
           {variaciones.length > 0 && (
-            <div style={{ marginBottom: '24px', marginTop: '10px' }}>
-              <label htmlFor="select-variacion-producto" className="modal-label" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Selecciona la presentación del producto:
-              </label>
-              <select 
-                id="select-variacion-producto"
-                aria-label="Seleccionar presentación del producto"
-                value={variacionSeleccionada?.id || ''} 
-                onChange={e => {
-                  const selected = variaciones.find(v => v.id === e.target.value);
-                  setVariacionSeleccionada(selected);
-                }}
-                className="modal-input"
-                style={{ cursor: 'pointer', background: '#fff' }}
+            <div className="variant-selection-section">
+              <div className="variant-header-row">
+                <span className="variant-section-title">
+                  Elige tu presentación:
+                </span>
+                <span className="variant-count-badge">
+                  {variaciones.length} {variaciones.length === 1 ? 'opción' : 'opciones'}
+                </span>
+              </div>
+
+              <div 
+                className="variant-cards-grid" 
+                role="radiogroup" 
+                aria-label="Selecciona la presentación del producto"
               >
-                {variaciones.map(v => {
+                {variaciones.map((v) => {
+                  const isSelected = variacionSeleccionada?.id === v.id;
                   const vesVal = Number(v.precio_venta) * tasa;
-                  const bsFormatted = vesVal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  const bsFormatted = vesVal.toLocaleString('es-VE', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  });
+
                   return (
-                    <option key={v.id} value={v.id}>
-                      {v.presentacion} — (Bs. {bsFormatted})
-                    </option>
+                    <button
+                      key={v.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => setVariacionSeleccionada(v)}
+                      className={`variant-card ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="variant-card-header">
+                        <span className="variant-card-title">{v.presentacion}</span>
+                        <div className={`variant-radio-circle ${isSelected ? 'active' : ''}`}>
+                          {isSelected && <div className="variant-radio-dot" />}
+                        </div>
+                      </div>
+
+                      <div className="variant-card-pricing">
+                        <span className="variant-card-bs">Bs. {bsFormatted}</span>
+                      </div>
+                    </button>
                   );
                 })}
-              </select>
+              </div>
             </div>
           )}
 
@@ -354,14 +404,39 @@ export default function ProductDetail() {
             </table>
           </div>
 
-          {/* Botón de compra unificado */}
-          <button 
-            onClick={handleAction}
-            className="btn-action-main"
-            style={{ backgroundColor: 'var(--color-purple)' }}
-          >
-            {isDigital ? 'Adquirir y Editar en Canva' : 'Encargar por WhatsApp'}
-          </button>
+          {/* Botones de acción */}
+          <div className="product-actions-group">
+            <button 
+              type="button"
+              onClick={handleAddToCart}
+              className="btn-add-to-cart"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Agregar al Carrito
+            </button>
+
+            {isDigital ? (
+              <button 
+                type="button"
+                onClick={() => setShowDigitalModal(true)}
+                className="btn-buy-now"
+              >
+                ⚡ Adquirir Ahora (Canva)
+              </button>
+            ) : (
+              <button 
+                type="button"
+                onClick={handleBuyNow}
+                className="btn-buy-now"
+              >
+                ⚡ Pedir Directamente
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

@@ -1,0 +1,19 @@
+{
+  "name": "textiprint-agent",
+  "version": "1.0.0",
+  "description": "Agente inteligente de WhatsApp para Textiprint",
+  "main": "src/whatsappBot.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/whatsappBot.js",
+    "test:cli": "node src/testCli.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
