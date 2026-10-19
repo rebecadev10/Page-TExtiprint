@@ -2,11 +2,39 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
+const CACHE_KEY_DIGITAL = 'textiprint_cached_digital';
+const CACHE_KEY_TASA = 'textiprint_cached_tasa';
+
 export default function ShopDigital() {
   const navigate = useNavigate();
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD
+
+  const [productos, setProductos] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_DIGITAL);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [tasa, setTasa] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_TASA);
+      return cached ? parseFloat(cached) : 1;
+    } catch {
+      return 1;
+    }
+  });
+
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_DIGITAL);
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [email, setEmail] = useState('');
 
@@ -23,32 +51,39 @@ export default function ShopDigital() {
   useEffect(() => {
     async function obtenerPlantillasYTasa() {
       try {
-        setLoading(true);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout de red')), 10000)
+        );
 
-        // 1. Buscamos las plantillas digitales
-        const { data: productosData, error: productosError } = await supabase
-          .from('productos')
-          .select('id, nombre, tipo, imagen_url, product_variations(precio_venta)')
-          .eq('tipo', 'digital')
-          .order('nombre');
+        const fetchPromise = Promise.all([
+          supabase
+            .from('productos')
+            .select('id, nombre, tipo, imagen_url, product_variations(precio_venta)')
+            .eq('tipo', 'digital')
+            .order('nombre'),
+          supabase
+            .from('configuraciones')
+            .select('valor')
+            .eq('clave', 'tasa_bcv')
+            .single()
+        ]);
 
-        if (productosError) throw productosError;
-        setProductos(productosData);
+        const [prodRes, configRes] = await Promise.race([fetchPromise, timeoutPromise]);
 
-        // 2. Traemos la tasa de cambio
-        const { data: configData, error: configError } = await supabase
-          .from('configuraciones')
-          .select('valor')
-          .eq('clave', 'tasa_bcv');
+        if (prodRes.error) throw prodRes.error;
 
-        if (!configError && configData && configData.length > 0) {
-          setTasa(parseFloat(configData[0].valor));
-        } else {
-          setTasa(1);
+        if (prodRes.data && prodRes.data.length > 0) {
+          setProductos(prodRes.data);
+          localStorage.setItem(CACHE_KEY_DIGITAL, JSON.stringify(prodRes.data));
         }
 
+        if (configRes?.data?.valor) {
+          const tasaVal = parseFloat(configRes.data.valor);
+          setTasa(tasaVal);
+          localStorage.setItem(CACHE_KEY_TASA, String(tasaVal));
+        }
       } catch (error) {
-        console.error('Error al cargar plantillas o tasa:', error.message);
+        console.warn('Aviso al cargar plantillas digitales:', error.message);
       } finally {
         setLoading(false);
       }

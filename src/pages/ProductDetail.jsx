@@ -23,48 +23,33 @@ export default function ProductDetail() {
   // Teléfono configurado para WhatsApp
   const telefonoWhatsApp = "584142467351";
 
-  // Cargar producto, variaciones y tasa de cambio
+  // Cargar producto, variaciones y tasa de cambio en paralelo (3x más rápido)
   useEffect(() => {
     const fetchProductoYDatos = async () => {
       try {
         setLoading(true);
 
-        // 1. Obtener producto
-        const { data: prodData, error: prodError } = await supabase
-          .from('productos')
-          .select('*')
-          .eq('id', id)
-          .single();
+        const [prodRes, varRes, configRes] = await Promise.all([
+          supabase.from('productos').select('*').eq('id', id).single(),
+          supabase.from('product_variations').select('*').eq('producto_id', id),
+          supabase.from('configuraciones').select('valor').eq('clave', 'tasa_bcv').single()
+        ]);
 
-        if (prodError) throw prodError;
-        setProducto(prodData);
+        if (prodRes.error) throw prodRes.error;
+        setProducto(prodRes.data);
 
-        // Establecer imagen principal inicial
-        if (prodData?.imagen_url) {
-          setCurrentMainImage(prodData.imagen_url);
+        if (prodRes.data?.imagen_url) {
+          setCurrentMainImage(prodRes.data.imagen_url);
         }
 
-        // 2. Obtener variaciones del producto
-        const { data: varData, error: varError } = await supabase
-          .from('product_variations')
-          .select('*')
-          .eq('producto_id', id);
-
-        if (varError) throw varError;
-        setVariaciones(varData || []);
-        if (varData && varData.length > 0) {
-          setVariacionSeleccionada(varData[0]);
+        const variations = varRes.data || [];
+        setVariaciones(variations);
+        if (variations.length > 0) {
+          setVariacionSeleccionada(variations[0]);
         }
 
-        // 3. Obtener Tasa BCV desde configuraciones
-        const { data: configData } = await supabase
-          .from('configuraciones')
-          .select('valor')
-          .eq('clave', 'tasa_bcv')
-          .single();
-
-        if (configData?.valor) {
-          setTasaCambio(configData.valor);
+        if (configRes.data?.valor) {
+          setTasaCambio(configRes.data.valor);
         }
 
       } catch (err) {

@@ -1,27 +1,73 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-export default function ProductsList() {
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [tasa, setTasa] = useState(1); // Tasa de cambio de la BD (por defecto 1 si falla)
-  const navigate = useNavigate();
-  
-  const [variacionesSeleccionadas, setVariacionesSeleccionadas] = useState({});
+const CACHE_KEY_PRODUCTS = 'textiprint_cached_products';
+const CACHE_KEY_TASA = 'textiprint_cached_tasa';
 
-  useEffect(() => {
-    async function cargarCatalogoYTasa() {
-      try {
-        setLoading(true);
-        
-        // 1. Cargamos los productos con sus variantes
-        const { data: productosData, error: productosError } = await supabase
+export default function ProductsList() {
+  // 1. Inicializamos desde caché para renderizado instantáneo (0.0s sin skeletons)
+  const [productos, setProductos] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_PRODUCTS);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [tasa, setTasa] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_TASA);
+      return cached ? parseFloat(cached) : 1;
+    } catch {
+      return 1;
+    }
+  });
+
+  // Si ya tenemos productos en caché, NO mostramos skeletons bloqueantes
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_PRODUCTS);
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+
+  const [fetchError, setFetchError] = useState(null);
+  const navigate = useNavigate();
+
+  const [variacionesSeleccionadas, setVariacionesSeleccionadas] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_PRODUCTS);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const iniciales = {};
+        parsed.forEach(prod => {
+          if (prod.product_variations && prod.product_variations.length > 0) {
+            iniciales[prod.id] = prod.product_variations[0].id;
+          }
+        });
+        return iniciales;
+      }
+    } catch {}
+    return {};
+  });
+
+  const cargarCatalogoYTasa = useCallback(async () => {
+    try {
+      // Peticiones en paralelo con Promise.all y timeout de seguridad de 10 segundos
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Tiempo de espera de red')), 10000)
+      );
+
+      const fetchPromise = Promise.all([
+        supabase
           .from('productos')
           .select(`
             id,
             nombre,
-            descripcion,
             tipo,
             imagen_url,
             product_variations (
@@ -29,45 +75,51 @@ export default function ProductsList() {
               presentacion,
               precio_venta
             )
-          `);
-
-        if (productosError) throw productosError;
-        setProductos(productosData);
-
-        // 2. Cargamos la tasa de cambio de la tabla configuraciones de forma segura
-        const { data: configData, error: configError } = await supabase
+          `)
+          .order('nombre'),
+        supabase
           .from('configuraciones')
           .select('valor')
-          .eq('clave', 'tasa_bcv');
+          .eq('clave', 'tasa_bcv')
+          .single()
+      ]);
 
-        // Verificamos que tengamos datos válidos en el arreglo devuelto
-        if (!configError && configData && configData.length > 0) {
-          const tasaNumerica = parseFloat(configData[0].valor);
-          console.log("Tasa BCV cargada con éxito para Textiprint:", tasaNumerica);
-          setTasa(tasaNumerica);
-        } else {
-          console.warn('No se pudo encontrar la tasa_bcv en la base de datos. Usando 1 por defecto.', configError);
-          setTasa(1);
-        }
+      const [prodRes, configRes] = await Promise.race([fetchPromise, timeoutPromise]);
 
-        // Inicializamos las variantes por defecto
+      if (prodRes.error) throw prodRes.error;
+
+      if (prodRes.data && prodRes.data.length > 0) {
+        setProductos(prodRes.data);
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(prodRes.data));
+
+        // Inicializamos las variantes
         const iniciales = {};
-        productosData.forEach(prod => {
+        prodRes.data.forEach(prod => {
           if (prod.product_variations && prod.product_variations.length > 0) {
             iniciales[prod.id] = prod.product_variations[0].id;
           }
         });
         setVariacionesSeleccionadas(iniciales);
-
-      } catch (error) {
-        console.error('Error al conectar con Supabase:', error.message);
-      } finally {
-        setLoading(false);
       }
-    }
 
-    cargarCatalogoYTasa();
+      if (configRes?.data?.valor) {
+        const tasaNum = parseFloat(configRes.data.valor);
+        setTasa(tasaNum);
+        localStorage.setItem(CACHE_KEY_TASA, String(tasaNum));
+      }
+
+      setFetchError(null);
+    } catch (error) {
+      console.warn('Aviso de carga en catálogo Textiprint:', error.message);
+      setFetchError(error.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    cargarCatalogoYTasa();
+  }, [cargarCatalogoYTasa]);
 
   const handleVariationChange = (productoId, varianteId) => {
     setVariacionesSeleccionadas(prev => ({
@@ -76,7 +128,8 @@ export default function ProductsList() {
     }));
   };
 
-  if (loading) {
+  // Solo mostramos skeleton si NO hay productos previos en caché y aún está cargando
+  if (loading && productos.length === 0) {
     return (
       <div className="home-featured-grid">
         {[1, 2, 3].map((n) => (
@@ -92,10 +145,26 @@ export default function ProductsList() {
     );
   }
 
+  // Si falló y no hay nada en caché
   if (productos.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#888' }}>
-        <p style={{ fontSize: '1.1rem' }}>Pronto añadiremos productos espectaculares a nuestro catálogo.</p>
+      <div style={{ textAlign: 'center', padding: '50px 20px', color: '#666' }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🛍️</div>
+        <p style={{ fontSize: '1.1rem', marginBottom: '18px', maxWidth: '480px', margin: '0 auto 18px' }}>
+          {fetchError 
+            ? 'La conexión con el catálogo tardó un poco más de lo habitual.' 
+            : 'Pronto añadiremos productos espectaculares a nuestro catálogo.'}
+        </p>
+        <button
+          onClick={() => {
+            setLoading(true);
+            cargarCatalogoYTasa();
+          }}
+          className="btn-home-purple"
+          style={{ padding: '12px 28px', fontSize: '0.95rem' }}
+        >
+          🔄 Cargar productos
+        </button>
       </div>
     );
   }
@@ -106,9 +175,9 @@ export default function ProductsList() {
         const varianteIdActual = variacionesSeleccionadas[producto.id];
         const varianteActual = producto.product_variations?.find(v => v.id === varianteIdActual);
         
-        // Calculamos el precio convertido a Bolívares (VES)
+        // Calculamos el precio convertido ÚNICAMENTE a Bolívares (VES)
         const precioUSD = varianteActual ? Number(varianteActual.precio_venta) : 0;
-        const precioVES = precioUSD * tasa; // Multiplicación matemática real por la tasa de Supabase
+        const precioVES = precioUSD * tasa;
 
         return (
           <div 
