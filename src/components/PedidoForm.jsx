@@ -330,7 +330,6 @@ export default function PedidoForm() {
             <span className="checkout-total-label">Total a pagar:</span>
             <span className="checkout-total-value">{totalFormateadoBs}</span>
           </div>
-          <span className="checkout-bcv-note">Tasa oficial BCV</span>
         </div>
 
         <form onSubmit={handleSubmit} className="checkout-form">

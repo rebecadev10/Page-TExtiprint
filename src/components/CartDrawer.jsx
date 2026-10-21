@@ -141,7 +141,6 @@ export default function CartDrawer() {
                 <span className="cart-total-label">Total a pagar:</span>
                 <span className="cart-total-value">{totalBsFormatted}</span>
               </div>
-              <span className="cart-bcv-note">Tasa oficial BCV</span>
             </div>
 
             <button 

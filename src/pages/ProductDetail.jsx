@@ -309,14 +309,13 @@ export default function ProductDetail() {
             <div className="detail-price-main-row">
               <span className="price-bs-large">{precioFormateadoBs}</span>
             </div>
-            <div className="price-bcv-row">
-              <span className="price-bcv-tag">Tasa oficial BCV</span>
-              {variacionSeleccionada && (
+            {variacionSeleccionada && (
+              <div className="price-bcv-row">
                 <span className="price-selected-label">
-                  • {variacionSeleccionada.presentacion}
+                  {variacionSeleccionada.presentacion}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <p className="detail-desc">{producto.descripcion}</p>
