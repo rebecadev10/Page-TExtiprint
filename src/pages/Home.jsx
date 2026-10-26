@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProductsList from '../components/Products';
 import FAQ from '../components/FAQ';
 import Hero1 from '../assets/Hero1.webp';
@@ -10,6 +11,9 @@ import etiquetasImg from '../assets/etiqueta.webp';
 import corporativoImg from '../assets/Tarjetas.webp';
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [categoriaFiltro, setCategoriaFiltro] = useState('todos');
+
   const handleScrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -17,29 +21,55 @@ export default function Home() {
     }
   };
 
+  const handleSelectCategory = (catId) => {
+    setCategoriaFiltro(catId);
+    const element = document.getElementById('catalogo-vivo');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const services = [
     { 
+      id: 'toppers',
       title: 'Cake Toppers & Recuerdos Polaroid', 
+      badge: '🎂 Fiestas & Recuerdos',
       desc: 'Diseños multicapa 3D, fotos tipo polaroid y papelería personalizada en corte fino para hacer brillar tus tortas y celebraciones especiales.', 
       className: 'bg-pastel-purple',
+      ctaText: 'Ver toppers y fotos',
+      linkUrl: null,
       img: topperImg
     },
     { 
+      id: 'canva',
       title: 'Plantillas de Canva Editables', 
+      badge: '⚡ Descarga Inmediata',
       desc: 'Recursos e identidades digitales listas para transformar tus redes sociales o proyectos comerciales de manera inmediata, profesional y sin complicaciones.', 
       className: 'bg-pastel-yellow',
+      ctaText: 'Ver plantillas Canva',
+      linkUrl: '/plantillas-digitales',
+      linkText: 'Tienda Digital ↗',
       img: canvaImg
     },
     { 
+      id: 'escolar',
       title: 'Kits de Etiquetas Escolares', 
+      badge: '🎒 Vuelta a Clases',
       desc: 'Identificadores creativos de alta resistencia diseñados para organizar todos los útiles de los más pequeños con diseños únicos y duraderos.', 
       className: 'bg-pastel-pink',
+      ctaText: 'Ver kits escolares',
+      linkUrl: null,
       img: etiquetasImg
     },
     { 
+      id: 'corporativo',
       title: 'Papelería e Identidad Corporativa', 
+      badge: '💼 Marcas & Negocios',
       desc: 'Tarjetas de presentación, empaques y complementos impresos detalladamente para elevar la presencia de tu marca y cautivar a tus clientes desde el primer contacto.', 
       className: 'bg-pastel-cyan',
+      ctaText: 'Ver papelería corporativa',
+      linkUrl: '/tienda-fisica',
+      linkText: 'Papelería Física ↗',
       img: corporativoImg
     },
   ];
@@ -101,47 +131,86 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. SECCIÓN NUESTROS SERVICIOS */}
+      {/* 2. SECCIÓN NUESTROS SERVICIOS Y CATEGORÍAS */}
       <section className="home-services-section">
         <span className="home-section-subtitle-purple">¿Qué hacemos?</span>
         <h2 className="home-section-title">Servicios &amp; Categorías</h2>
+        <p className="home-section-lead-text">
+          Selecciona una categoría para explorar sus productos al instante o acceder a cada colección:
+        </p>
         
         <div className="home-services-grid">
-          {services.map((service, index) => (
-            <div 
-              key={index} 
-              className={`service-card ${service.className}`}
-            >
-              <div className="service-card-content">
-                <h3 className="service-card-title">{service.title}</h3>
-                <p className="service-card-desc">{service.desc}</p>
-              </div>
-              
-              {service.img && (
-                <div className="service-card-img-wrapper">
-                  <img 
-                    src={service.img} 
-                    alt={service.title} 
-                    className="service-card-img"
-                    width="240"
-                    height="240"
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      e.target.style.display = 'none'; // Se oculta limpio si no encuentra la imagen
-                    }}
-                  />
+          {services.map((service) => {
+            const isSelected = categoriaFiltro === service.id;
+            return (
+              <div 
+                key={service.id} 
+                onClick={() => handleSelectCategory(service.id)}
+                className={`service-card ${service.className} ${isSelected ? 'active-filter' : ''}`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectCategory(service.id);
+                  }
+                }}
+                aria-label={`Ver productos de ${service.title}`}
+              >
+                <div className="service-card-content">
+                  <span className="service-card-badge">{service.badge}</span>
+                  <h3 className="service-card-title">{service.title}</h3>
+                  <p className="service-card-desc">{service.desc}</p>
+
+                  <div className="service-card-footer">
+                    <span className="service-card-action-btn">
+                      {service.ctaText} <span className="action-arrow">↓</span>
+                    </span>
+                    {service.linkUrl && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(service.linkUrl);
+                        }}
+                        className="service-card-sublink"
+                        title={`Ir a ${service.linkText}`}
+                      >
+                        {service.linkText}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+                
+                {service.img && (
+                  <div className="service-card-img-wrapper">
+                    <img 
+                      src={service.img} 
+                      alt={service.title} 
+                      className="service-card-img"
+                      width="240"
+                      height="240"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* 3. CATÁLOGO REAL ASOCIADO A SUPABASE */}
+      {/* 3. CATÁLOGO REAL ASOCIADO A SUPABASE CON FILTRO DINÁMICO */}
       <section className="home-featured-section" id="catalogo-vivo">
-        <span className="home-section-subtitle-pink">Selección especial</span>
-        <ProductsList />
+        <span className="home-section-subtitle-pink">Catálogo en línea</span>
+        <ProductsList 
+          categoriaFiltro={categoriaFiltro} 
+          onSelectCategoria={setCategoriaFiltro} 
+        />
       </section>
 
       {/* 4. PREGUNTAS FRECUENTES (FAQ) */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useCart } from '../context/CartContext';
@@ -17,6 +17,7 @@ export default function PedidoForm() {
   const [fetchingData, setFetchingData] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [tasa, setTasa] = useState(1);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -138,31 +139,79 @@ export default function PedidoForm() {
       return;
     }
 
+    // 1. BLOQUEO INMEDIATO ANTI DOBLE CLIC (Ref sincrónico + estado)
+    if (isSubmittingRef.current || loading) return;
+    isSubmittingRef.current = true;
     setLoading(true);
 
     try {
       let clienteId = null;
+      const cleanTelefono = (formData.telefono || '').trim();
+      const cleanCorreo = (formData.correo || '').trim().toLowerCase();
+      const digitsTelefono = cleanTelefono.replace(/\D/g, '');
 
-      // 1. VALIDACIÓN / REGISTRO DE CLIENTE
-      const { data: clientesEncontrados, error: searchError } = await supabase
-        .from('clientes')
-        .select('id')
-        .eq('telefono', formData.telefono)
-        .limit(1);
+      // 2. REUTILIZAR CLIENTE EXISTENTE (Si correo o teléfono ya existen)
+      let clienteExistente = null;
 
-      if (searchError) throw searchError;
+      // A. Buscar primero por correo si fue proporcionado
+      if (cleanCorreo) {
+        const { data: porCorreo, error: errCorreo } = await supabase
+          .from('clientes')
+          .select('id, nombre, apellido, telefono, correo, ubicacion')
+          .ilike('correo', cleanCorreo)
+          .limit(1);
 
-      if (clientesEncontrados && clientesEncontrados.length > 0) {
-        clienteId = clientesEncontrados[0].id;
+        if (!errCorreo && porCorreo && porCorreo.length > 0) {
+          clienteExistente = porCorreo[0];
+        }
+      }
+
+      // B. Si no se encontró por correo y hay teléfono, buscar por teléfono
+      if (!clienteExistente && cleanTelefono) {
+        // Coincidencia exacta de teléfono
+        const { data: porTel, error: errTel } = await supabase
+          .from('clientes')
+          .select('id, nombre, apellido, telefono, correo, ubicacion')
+          .eq('telefono', cleanTelefono)
+          .limit(1);
+
+        if (!errTel && porTel && porTel.length > 0) {
+          clienteExistente = porTel[0];
+        } else if (digitsTelefono && digitsTelefono.length >= 7) {
+          // Búsqueda flexible por los últimos 7 dígitos para ignorar guiones/formatos
+          const { data: porLike } = await supabase
+            .from('clientes')
+            .select('id, nombre, apellido, telefono, correo, ubicacion')
+            .ilike('telefono', `%${digitsTelefono.slice(-7)}%`)
+            .limit(1);
+
+          if (porLike && porLike.length > 0) {
+            clienteExistente = porLike[0];
+          }
+        }
+      }
+
+      if (clienteExistente) {
+        clienteId = clienteExistente.id;
+
+        // Actualización silenciosa si el cliente no tenía correo o ubicación
+        const updates = {};
+        if (!clienteExistente.correo && cleanCorreo) updates.correo = cleanCorreo;
+        if ((!clienteExistente.telefono || clienteExistente.telefono === '00000000000') && cleanTelefono) updates.telefono = cleanTelefono;
+        if (formData.ubicacion && (!clienteExistente.ubicacion || clienteExistente.ubicacion === 'Caracas')) updates.ubicacion = formData.ubicacion;
+        if (Object.keys(updates).length > 0) {
+          supabase.from('clientes').update(updates).eq('id', clienteId).then(() => {});
+        }
       } else {
+        // Registrar nuevo cliente solo si no existe
         const { data: nuevoCliente, error: clienteError } = await supabase
           .from('clientes')
           .insert([
             {
-              nombre: formData.nombre,
-              apellido: formData.apellido,
-              telefono: formData.telefono,
-              correo: formData.correo || null,
+              nombre: formData.nombre.trim(),
+              apellido: formData.apellido.trim(),
+              telefono: cleanTelefono,
+              correo: cleanCorreo || null,
               origen: 'pagina_web',
               ubicacion: formData.ubicacion
             }
@@ -174,50 +223,71 @@ export default function PedidoForm() {
         clienteId = nuevoCliente.id;
       }
 
-      // 2. REGISTRO EN 'pedidos'
-      const { data: pedidoData, error: pedidoError } = await supabase
+      // 3. FILTRO ANTI-DUPLICADO DE PEDIDO Y VENTA (Últimos 2 minutos con mismo cliente y mismo total)
+      const dosMinutosAtras = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      let pedidoData = null;
+
+      const { data: pedidosRecientes, error: errBusqPedido } = await supabase
         .from('pedidos')
-        .insert([
-          {
-            cliente_id: clienteId,
-            estado: 'pendiente',
-            total_pedido: totalUsd // En USD en la base de datos
-          }
-        ])
-        .select()
-        .single();
+        .select('id, total_pedido, registro')
+        .eq('cliente_id', clienteId)
+        .gte('registro', dosMinutosAtras)
+        .order('registro', { ascending: false })
+        .limit(1);
 
-      if (pedidoError) throw pedidoError;
+      const esDuplicado = !errBusqPedido && pedidosRecientes && pedidosRecientes.length > 0 &&
+        Math.abs(Number(pedidosRecientes[0].total_pedido) - Number(totalUsd)) < 0.01;
 
-      // 3. REGISTRO EN 'pedido_items' (Múltiples items si vienen del carrito)
-      const itemsToInsert = orderItems.map((item) => ({
-        pedido_id: pedidoData.id,
-        variation_id: item.variationId,
-        cantidad: item.cantidad,
-        precio_unitario: item.precioUsd
-      }));
+      if (esDuplicado) {
+        console.warn('Filtro anti-duplicado activo: Se detectó pedido idéntico en los últimos 2 minutos. Reutilizando orden:', pedidosRecientes[0].id);
+        pedidoData = pedidosRecientes[0];
+      } else {
+        // REGISTRO EN 'pedidos'
+        const { data: nuevoPedido, error: pedidoError } = await supabase
+          .from('pedidos')
+          .insert([
+            {
+              cliente_id: clienteId,
+              estado: 'pendiente',
+              total_pedido: totalUsd // En USD en base de datos
+            }
+          ])
+          .select()
+          .single();
 
-      const { error: itemError } = await supabase
-        .from('pedido_items')
-        .insert(itemsToInsert);
+        if (pedidoError) throw pedidoError;
+        pedidoData = nuevoPedido;
 
-      if (itemError) throw itemError;
+        // REGISTRO EN 'pedido_items'
+        const itemsToInsert = orderItems.map((item) => ({
+          pedido_id: pedidoData.id,
+          variation_id: item.variationId,
+          cantidad: item.cantidad,
+          precio_unitario: item.precioUsd
+        }));
 
-      // 4. REGISTRO EN 'ventas'
-      const { error: ventaError } = await supabase
-        .from('ventas')
-        .insert([
-          {
-            cliente_id: clienteId,
-            canal: 'tienda_online',
-            total_venta: totalUsd,
-            estado: 'pendiente'
-          }
-        ]);
+        const { error: itemError } = await supabase
+          .from('pedido_items')
+          .insert(itemsToInsert);
 
-      if (ventaError) throw ventaError;
+        if (itemError) console.warn('Aviso en pedido_items:', itemError.message);
 
-      // 5. CÁLCULO Y CONSTRUCCIÓN DEL MENSAJE DE WHATSAPP (ESTRICTO BS.)
+        // REGISTRO EN 'ventas'
+        const { error: ventaError } = await supabase
+          .from('ventas')
+          .insert([
+            {
+              cliente_id: clienteId,
+              canal: 'tienda_online',
+              total_venta: totalUsd,
+              estado: 'pendiente'
+            }
+          ]);
+
+        if (ventaError) console.warn('Aviso en ventas:', ventaError.message);
+      }
+
+      // 4. CÁLCULO Y CONSTRUCCIÓN DEL MENSAJE DE WHATSAPP (ESTRICTO BS.)
       const numeroOrden = pedidoData.id.slice(0, 8).toUpperCase();
       const telefonoWhatsApp = "584142467351";
 
@@ -257,6 +327,7 @@ export default function PedidoForm() {
       alert("Hubo un problema al procesar tu pedido. Por favor intenta de nuevo.");
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -413,7 +484,7 @@ export default function PedidoForm() {
             disabled={loading} 
             className="btn-checkout-submit"
           >
-            {loading ? "Procesando orden..." : "Confirmar y Enviar a WhatsApp"}
+            {loading ? "Procesando pedido..." : "Confirmar y Enviar a WhatsApp"}
           </button>
         </form>
       </div>

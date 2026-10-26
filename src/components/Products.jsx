@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const CACHE_KEY_PRODUCTS = 'textiprint_cached_products';
 const CACHE_KEY_TASA = 'textiprint_cached_tasa';
 
-export default function ProductsList() {
+export default function ProductsList({ categoriaFiltro = 'todos', onSelectCategoria }) {
   // 1. Inicializamos desde caché para renderizado instantáneo (0.0s sin skeletons)
   const [productos, setProductos] = useState(() => {
     try {
@@ -128,6 +128,29 @@ export default function ProductsList() {
     }));
   };
 
+  const matchCategoria = useCallback((p, cat) => {
+    if (!cat || cat === 'todos') return true;
+    const n = (p.nombre || '').toLowerCase();
+    const d = p.tipo === 'digital';
+    if (cat === 'canva') return d;
+    if (cat === 'toppers') return !d && (n.includes('topper') || n.includes('polaroid') || n.includes('foto') || n.includes('albúm') || n.includes('album') || n.includes('cuadro'));
+    if (cat === 'escolar') return !d && (n.includes('escolar') || n.includes('etiqueta') || (n.includes('sticker') && !n.includes('emprendedor')) || n.includes('cartuchera') || n.includes('tula') || n.includes('cotillon'));
+    if (cat === 'corporativo') return !d && (n.includes('tarjeta') || n.includes('emprendedor') || n.includes('impresion') || n.includes('llavero') || n.includes('franela') || n.includes('boxer') || n.includes('bóxer'));
+    return true;
+  }, []);
+
+  const CATEGORIAS_PILLS = useMemo(() => [
+    { id: 'todos', label: '✨ Todos', icon: '✨' },
+    { id: 'toppers', label: '🎂 Toppers & Fotos', icon: '🎂' },
+    { id: 'canva', label: '💻 Plantillas Canva', icon: '💻' },
+    { id: 'escolar', label: '🎒 Kits Escolares', icon: '🎒' },
+    { id: 'corporativo', label: '💼 Papelería Corporativa', icon: '💼' }
+  ], []);
+
+  const productosFiltrados = useMemo(() => {
+    return productos.filter(p => matchCategoria(p, categoriaFiltro));
+  }, [productos, categoriaFiltro, matchCategoria]);
+
   // Solo mostramos skeleton si NO hay productos previos en caché y aún está cargando
   if (loading && productos.length === 0) {
     return (
@@ -170,76 +193,138 @@ export default function ProductsList() {
   }
 
   return (
-    <div className="home-featured-grid">
-      {productos.map((producto) => {
-        const varianteIdActual = variacionesSeleccionadas[producto.id];
-        const varianteActual = producto.product_variations?.find(v => v.id === varianteIdActual);
-        
-        // Calculamos el precio convertido ÚNICAMENTE a Bolívares (VES)
-        const precioUSD = varianteActual ? Number(varianteActual.precio_venta) : 0;
-        const precioVES = precioUSD * tasa;
+    <div className="catalog-master-container">
+      {/* Barra de Filtros Interactivos por Categoría */}
+      <div className="catalog-filter-container">
+        <div className="catalog-filter-pills" role="tablist" aria-label="Filtrar catálogo por categoría">
+          {CATEGORIAS_PILLS.map((cat) => {
+            const count = cat.id === 'todos' 
+              ? productos.length 
+              : productos.filter(p => matchCategoria(p, cat.id)).length;
+            const isActive = categoriaFiltro === cat.id;
 
-        return (
-          <div 
-            key={producto.id} 
-            onClick={() => navigate(`/producto/${producto.id}`)}
-            className="featured-item-card"
-          >
-            {/* Imagen del producto en caja rosa pastel */}
-            <div className="featured-item-img-box">
-              <img 
-                src={producto.imagen_url || 'https://via.placeholder.com/300x350?text=Textiprint'} 
-                alt={producto.nombre} 
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-
-            {/* Título */}
-            <h4 className="featured-item-title">{producto.nombre}</h4>
-
-            {/* Controles y precio */}
-            <div 
-              onClick={(e) => e.stopPropagation()} 
-              className="featured-item-controls"
-            >
-              {/* Selector de variantes */}
-              {producto.product_variations && producto.product_variations.length > 0 ? (
-                <div className="featured-item-select-wrapper">
-                  <select 
-                    value={varianteIdActual || ''} 
-                    onChange={(e) => handleVariationChange(producto.id, e.target.value)}
-                    className="featured-item-select"
-                    aria-label={`Seleccionar presentación para ${producto.nombre}`}
-                  >
-                    {producto.product_variations.map((variacion) => (
-                      <option key={variacion.id} value={variacion.id}>
-                        {variacion.presentacion}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <p style={{ fontSize: '0.75rem', color: '#ff4d4d', textAlign: 'center' }}>Sin precios configurados</p>
-              )}
-
-              {/* Único bloque de precio: Solo Bolívares (Bs.) */}
-              <div className="featured-item-price">
-                Bs. {precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-
-              {/* Botón */}
-              <button 
-                onClick={() => navigate(`/producto/${producto.id}`)}
-                className="btn-home-purple"
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => onSelectCategoria && onSelectCategoria(cat.id)}
+                className={`catalog-filter-pill ${isActive ? 'active' : ''}`}
               >
-                Ver Producto
+                <span className="pill-icon">{cat.icon}</span>
+                <span className="pill-label">{cat.label.replace(/^[^\s]+\s/, '')}</span>
+                <span className="pill-count">({count})</span>
               </button>
-            </div>
+            );
+          })}
+        </div>
 
+        {categoriaFiltro !== 'todos' && (
+          <div className="catalog-active-filter-banner">
+            <div className="filter-banner-text">
+              <span>Categoría: <strong>{CATEGORIAS_PILLS.find(c => c.id === categoriaFiltro)?.label}</strong></span>
+              <span className="filter-banner-sub">({productosFiltrados.length} productos disponibles)</span>
+            </div>
+            <button 
+              type="button"
+              onClick={() => onSelectCategoria && onSelectCategoria('todos')}
+              className="btn-clear-filter"
+            >
+              ✕ Ver todos
+            </button>
           </div>
-        );
-      })}
+        )}
+      </div>
+
+      {/* Grid de Productos Filtrados */}
+      {productosFiltrados.length === 0 ? (
+        <div className="catalog-empty-category">
+          <p>No hay productos en esta categoría por los momentos.</p>
+          <button 
+            type="button"
+            onClick={() => onSelectCategoria && onSelectCategoria('todos')}
+            className="btn-home-purple"
+          >
+            Ver todos los productos
+          </button>
+        </div>
+      ) : (
+        <div className="home-featured-grid">
+          {productosFiltrados.map((producto) => {
+            const varianteIdActual = variacionesSeleccionadas[producto.id];
+            const varianteActual = producto.product_variations?.find(v => v.id === varianteIdActual);
+            
+            // Calculamos el precio convertido ÚNICAMENTE a Bolívares (VES)
+            const precioUSD = varianteActual ? Number(varianteActual.precio_venta) : 0;
+            const precioVES = precioUSD * tasa;
+
+            return (
+              <div 
+                key={producto.id} 
+                onClick={() => navigate(`/producto/${producto.id}`)}
+                className="featured-item-card"
+              >
+                {/* Imagen del producto con badge de formato */}
+                <div className="featured-item-img-box">
+                  <span className={`product-format-badge ${producto.tipo === 'digital' ? 'badge-digital' : 'badge-fisico'}`}>
+                    {producto.tipo === 'digital' ? '💻 Canva Digital' : '✂️ Físico'}
+                  </span>
+                  <img 
+                    src={producto.imagen_url || 'https://via.placeholder.com/300x350?text=Textiprint'} 
+                    alt={producto.nombre} 
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+
+                {/* Título */}
+                <h4 className="featured-item-title">{producto.nombre}</h4>
+
+                {/* Controles y precio */}
+                <div 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="featured-item-controls"
+                >
+                  {/* Selector de variantes */}
+                  {producto.product_variations && producto.product_variations.length > 0 ? (
+                    <div className="featured-item-select-wrapper">
+                      <select 
+                        value={varianteIdActual || ''} 
+                        onChange={(e) => handleVariationChange(producto.id, e.target.value)}
+                        className="featured-item-select"
+                        aria-label={`Seleccionar presentación para ${producto.nombre}`}
+                      >
+                        {producto.product_variations.map((variacion) => (
+                          <option key={variacion.id} value={variacion.id}>
+                            {variacion.presentacion}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.75rem', color: '#ff4d4d', textAlign: 'center' }}>Sin precios configurados</p>
+                  )}
+
+                  {/* Único bloque de precio: Solo Bolívares (Bs.) */}
+                  <div className="featured-item-price">
+                    Bs. {precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+
+                  {/* Botón */}
+                  <button 
+                    onClick={() => navigate(`/producto/${producto.id}`)}
+                    className="btn-home-purple"
+                  >
+                    Ver Producto
+                  </button>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useCart } from '../context/CartContext';
@@ -13,6 +13,8 @@ export default function ProductDetail() {
   const [variaciones, setVariaciones] = useState([]);
   const [variacionSeleccionada, setVariacionSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [tasaCambio, setTasaCambio] = useState(1);
 
   // Estados del Modal Digital y Galería
@@ -88,21 +90,26 @@ export default function ProductDetail() {
   // Manejo del envío del modal para productos digitales
   const handleModalSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    // 1. BLOQUEO INMEDIATO ANTI DOBLE CLIC (Ref sincrónico + estado)
+    if (isSubmittingRef.current || submittingOrder) return;
+    isSubmittingRef.current = true;
+    setSubmittingOrder(true);
 
     try {
       const nombreProducto = producto?.nombre || "";
       const presentacion = variacionSeleccionada?.presentacion || "Única";
       const precioUsd = variacionSeleccionada?.precio_venta || 0;
       const variationId = variacionSeleccionada?.id || (variaciones.length > 0 ? variaciones[0].id : null);
+      const cleanCorreo = (email || '').trim().toLowerCase();
 
-      // 1. Buscar o Registrar Cliente con nombre derivado del correo
+      // 2. REUTILIZAR CLIENTE EXISTENTE (Buscar por correo)
       let clienteId = null;
 
       const { data: clientesExistentes, error: searchError } = await supabase
         .from('clientes')
-        .select('id')
-        .eq('correo', email)
+        .select('id, nombre, apellido, correo, telefono, ubicacion')
+        .ilike('correo', cleanCorreo)
         .limit(1);
 
       if (searchError) throw searchError;
@@ -110,7 +117,7 @@ export default function ProductDetail() {
       if (clientesExistentes && clientesExistentes.length > 0) {
         clienteId = clientesExistentes[0].id;
       } else {
-        const { nombre: nombreExtraido, apellido: apellidoExtraido } = extraerNombreDeCorreo(email);
+        const { nombre: nombreExtraido, apellido: apellidoExtraido } = extraerNombreDeCorreo(cleanCorreo);
 
         const { data: nuevoCliente, error: errCliente } = await supabase
           .from('clientes')
@@ -119,7 +126,7 @@ export default function ProductDetail() {
               nombre: nombreExtraido,
               apellido: apellidoExtraido,
               telefono: '00000000000',
-              correo: email,
+              correo: cleanCorreo,
               origen: 'pagina_web',
               ubicacion: 'Caracas'
             }
@@ -131,52 +138,73 @@ export default function ProductDetail() {
         clienteId = nuevoCliente.id;
       }
 
-      // 2. Registrar Pedido
-      const { data: pedido, error: errPedido } = await supabase
+      // 3. FILTRO ANTI-DUPLICADO DE PEDIDO Y VENTA (Últimos 2 minutos con mismo cliente y mismo monto)
+      const dosMinutosAtras = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      let pedido = null;
+
+      const { data: pedidosRecientes, error: errBusqPedido } = await supabase
         .from('pedidos')
-        .insert([
-          {
-            cliente_id: clienteId,
-            estado: 'pendiente',
-            total_pedido: precioUsd
-          }
-        ])
-        .select()
-        .single();
+        .select('id, total_pedido, registro')
+        .eq('cliente_id', clienteId)
+        .gte('registro', dosMinutosAtras)
+        .order('registro', { ascending: false })
+        .limit(1);
 
-      if (errPedido) throw errPedido;
+      const esDuplicado = !errBusqPedido && pedidosRecientes && pedidosRecientes.length > 0 &&
+        Math.abs(Number(pedidosRecientes[0].total_pedido) - Number(precioUsd)) < 0.01;
 
-      // 3. Registrar Ítem de Pedido
-      if (variationId) {
-        const { error: errItem } = await supabase
-          .from('pedido_items')
+      if (esDuplicado) {
+        console.warn('Filtro anti-duplicado activo: Se detectó orden digital idéntica en los últimos 2 minutos. Reutilizando orden:', pedidosRecientes[0].id);
+        pedido = pedidosRecientes[0];
+      } else {
+        // Registrar Pedido
+        const { data: nuevoPedido, error: errPedido } = await supabase
+          .from('pedidos')
           .insert([
             {
-              pedido_id: pedido.id,
-              variation_id: variationId,
-              cantidad: 1,
-              precio_unitario: precioUsd
+              cliente_id: clienteId,
+              estado: 'pendiente',
+              total_pedido: precioUsd
+            }
+          ])
+          .select()
+          .single();
+
+        if (errPedido) throw errPedido;
+        pedido = nuevoPedido;
+
+        // Registrar Ítem de Pedido
+        if (variationId) {
+          const { error: errItem } = await supabase
+            .from('pedido_items')
+            .insert([
+              {
+                pedido_id: pedido.id,
+                variation_id: variationId,
+                cantidad: 1,
+                precio_unitario: precioUsd
+              }
+            ]);
+
+          if (errItem) console.warn('Aviso en pedido_items:', errItem.message);
+        }
+
+        // Registrar Venta
+        const { error: errVenta } = await supabase
+          .from('ventas')
+          .insert([
+            {
+              cliente_id: clienteId,
+              canal: 'tienda_online',
+              total_venta: precioUsd,
+              estado: 'pendiente'
             }
           ]);
 
-        if (errItem) throw errItem;
+        if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
       }
 
-      // 4. Registrar Venta
-      const { error: errVenta } = await supabase
-        .from('ventas')
-        .insert([
-          {
-            cliente_id: clienteId,
-            canal: 'tienda_online',
-            total_venta: precioUsd,
-            estado: 'pendiente'
-          }
-        ]);
-
-      if (errVenta) console.warn('Aviso en ventas:', errVenta.message);
-
-      // 5. Generar Mensaje de WhatsApp mostrando ÚNICAMENTE el monto en Bolívares
+      // 4. Generar Mensaje de WhatsApp mostrando ÚNICAMENTE el monto en Bolívares
       const precioFormateado = (Number(precioUsd) * Number(tasaCambio)).toLocaleString('es-VE', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
@@ -187,7 +215,7 @@ export default function ProductDetail() {
         `💻 *Recurso Digital:* ${nombreProducto}\n` +
         `🎨 *Presentación:* ${presentacion}\n` +
         `💰 *Monto a pagar:* Bs. ${precioFormateado}\n` +
-        `📧 *Correo de Canva:* ${email}\n\n` +
+        `📧 *Correo de Canva:* ${cleanCorreo}\n\n` +
         `Adjunto mi comprobante de pago para la activación. ✨`;
 
       const urlWhatsApp = `https://wa.me/${telefonoWhatsApp}?text=${encodeURIComponent(mensajeDigital)}`;
@@ -199,7 +227,8 @@ export default function ProductDetail() {
       console.error('Error al procesar la orden digital:', error);
       alert(`Ocurrió un detalle al guardar la orden: ${error.message || 'Intente nuevamente'}`);
     } finally {
-      setLoading(false);
+      setSubmittingOrder(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -443,8 +472,8 @@ export default function ProductDetail() {
                 Al presionar el botón se abrirá WhatsApp. Envíanos tu comprobante de Pago Móvil y habilitaremos el acceso a este correo de inmediato.
               </div>
 
-              <button type="submit" className="btn-whatsapp">
-                Confirmar por WhatsApp
+              <button type="submit" className="btn-whatsapp" disabled={submittingOrder}>
+                {submittingOrder ? "Procesando pedido..." : "Confirmar por WhatsApp"}
               </button>
             </form>
             <button onClick={() => setShowDigitalModal(false)} className="btn-cancel">Cancelar</button>
