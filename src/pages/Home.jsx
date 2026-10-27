@@ -77,11 +77,26 @@ export default function Home() {
   return (
     <div className="home-wrapper">
       
+      {/* FONDO ANIMADO LIVIANO DE ALTO IMPACTO (0 KB, 60 FPS, ESTILO VIDEO AMBIENTAL) */}
+      <div className="ambient-motion-backdrop" aria-hidden="true">
+        <div className="ambient-orb orb-1"></div>
+        <div className="ambient-orb orb-2"></div>
+        <div className="ambient-orb orb-3"></div>
+        <div className="ambient-orb orb-4"></div>
+        <div className="ambient-pattern-grid"></div>
+        <div className="ambient-sparkles-layer">
+          <span className="floating-sparkle sp-1">✨</span>
+          <span className="floating-sparkle sp-2">💖</span>
+          <span className="floating-sparkle sp-3">✂️</span>
+          <span className="floating-sparkle sp-4">🌸</span>
+          <span className="floating-sparkle sp-5">✨</span>
+          <span className="floating-sparkle sp-6">🎀</span>
+          <span className="floating-sparkle sp-7">⭐</span>
+        </div>
+      </div>
+      
       {/* 1. SECCIÓN HERO OPTIMIZADA CON CRITERIOS UX */}
       <section className="home-hero-section">
-        <span className="hero-deco-sparkle sparkle-1">✨</span>
-        <span className="hero-deco-sparkle sparkle-2">💖</span>
-        <span className="hero-deco-sparkle sparkle-3">✨</span>
 
         <div className="hero-container">
           

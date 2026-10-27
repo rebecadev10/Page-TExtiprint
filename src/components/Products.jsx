@@ -265,11 +265,13 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
                 onClick={() => navigate(`/producto/${producto.id}`)}
                 className="featured-item-card"
               >
-                {/* Imagen del producto con badge de formato */}
+                {/* Imagen del producto */}
                 <div className="featured-item-img-box">
-                  <span className={`product-format-badge ${producto.tipo === 'digital' ? 'badge-digital' : 'badge-fisico'}`}>
-                    {producto.tipo === 'digital' ? '💻 Canva Digital' : '✂️ Físico'}
-                  </span>
+                  {producto.tipo === 'digital' && (
+                    <span className="product-format-badge badge-digital">
+                      ⚡ Plantilla Canva
+                    </span>
+                  )}
                   <img 
                     src={producto.imagen_url || 'https://via.placeholder.com/300x350?text=Textiprint'} 
                     alt={producto.nombre} 

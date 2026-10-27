@@ -354,8 +354,138 @@ button, input, textarea, select, a {
    SRC/PAGES/HOME.JSX - ESTILOS CON IDENTIDAD DE MARCA (UX/UI)
    ========================================================================== */
 .home-wrapper {
-  background-color: var(--color-white);
+  position: relative;
+  background-color: #fffafb;
   color: var(--color-black);
+  overflow: hidden;
+}
+
+/* ========================================================
+   FONDO ANIMADO AMBIENTAL LIVIANO (ESTILO VIDEO EN MOVIMIENTO)
+   0 KB de descarga, acelerado por GPU (60 FPS), no bloquea datos
+   ======================================================== */
+.ambient-motion-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Esferas luminosas flotantes (Efecto Aurora Líquida en Movimiento) */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+  will-change: transform;
+}
+
+.ambient-orb.orb-1 {
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, #f472b6 0%, #db2777 65%, transparent 85%);
+  top: -80px;
+  right: -60px;
+  animation: moveOrb1 20s ease-in-out infinite alternate;
+}
+
+.ambient-orb.orb-2 {
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle, #c084fc 0%, #7c3aed 65%, transparent 85%);
+  top: 25%;
+  left: -140px;
+  animation: moveOrb2 25s ease-in-out infinite alternate;
+}
+
+.ambient-orb.orb-3 {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #fde047 0%, #f59e0b 65%, transparent 85%);
+  top: 55%;
+  right: -100px;
+  animation: moveOrb3 22s ease-in-out infinite alternate;
+}
+
+.ambient-orb.orb-4 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #67e8f9 0%, #06b6d4 65%, transparent 85%);
+  top: 80%;
+  left: -40px;
+  animation: moveOrb4 24s ease-in-out infinite alternate;
+}
+
+@keyframes moveOrb1 {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate3d(-160px, 160px, 0) scale(1.18) rotate(90deg); }
+  100% { transform: translate3d(-60px, 300px, 0) scale(0.92) rotate(180deg); }
+}
+
+@keyframes moveOrb2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(240px, -120px, 0) scale(1.22); }
+  100% { transform: translate3d(140px, 180px, 0) scale(0.96); }
+}
+
+@keyframes moveOrb3 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-180px, -140px, 0) scale(1.16); }
+  100% { transform: translate3d(-260px, 90px, 0) scale(0.9); }
+}
+
+@keyframes moveOrb4 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(190px, -90px, 0) scale(1.12); }
+  100% { transform: translate3d(90px, -180px, 0) scale(0.9); }
+}
+
+/* Patrón de textura micro-dot sutil para eliminar sensación plana */
+.ambient-pattern-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(rgba(111, 35, 126, 0.06) 1.2px, transparent 1.2px);
+  background-size: 32px 32px;
+  opacity: 0.75;
+}
+
+/* Partículas creativas flotantes con movimiento suave */
+.ambient-sparkles-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.floating-sparkle {
+  position: absolute;
+  font-size: 1.4rem;
+  opacity: 0.55;
+  filter: drop-shadow(0 2px 8px rgba(221, 10, 104, 0.2));
+  will-change: transform, opacity;
+}
+
+.sp-1 { top: 8%; left: 6%; animation: floatSparkle 8s ease-in-out infinite; }
+.sp-2 { top: 18%; right: 10%; animation: floatSparkle 11s ease-in-out infinite 2s; font-size: 1.6rem; }
+.sp-3 { top: 35%; left: 4%; animation: floatSparkle 9s ease-in-out infinite 1s; }
+.sp-4 { top: 48%; right: 7%; animation: floatSparkle 12s ease-in-out infinite 3s; font-size: 1.5rem; }
+.sp-5 { top: 65%; left: 9%; animation: floatSparkle 10s ease-in-out infinite 2.5s; }
+.sp-6 { top: 78%; right: 12%; animation: floatSparkle 13s ease-in-out infinite 4s; }
+.sp-7 { top: 88%; left: 14%; animation: floatSparkle 9.5s ease-in-out infinite 1.5s; font-size: 1.5rem; }
+
+@keyframes floatSparkle {
+  0% { transform: translateY(0px) rotate(0deg) scale(0.92); opacity: 0.3; }
+  50% { transform: translateY(-30px) rotate(16deg) scale(1.15); opacity: 0.85; }
+  100% { transform: translateY(0px) rotate(0deg) scale(0.92); opacity: 0.3; }
 }
 
 /* 1. Hero Sección */
@@ -363,7 +493,8 @@ button, input, textarea, select, a {
   position: relative;
   overflow: hidden;
   padding: 80px 24px;
-  background: radial-gradient(circle at 85% 20%, #fdf2f8 0%, var(--color-white) 70%);
+  background: transparent;
+  z-index: 1;
 }
 
 .hero-container {
@@ -457,6 +588,12 @@ button, input, textarea, select, a {
   transform: rotate(1.5deg);
   width: 100%;
   max-width: 540px;
+  animation: heroFloat 7s ease-in-out infinite alternate;
+}
+
+@keyframes heroFloat {
+  0% { transform: translateY(0px) rotate(1.5deg); }
+  100% { transform: translateY(-12px) rotate(0.5deg); }
 }
 
 .hero-mockup-wrapper:hover {
@@ -490,7 +627,9 @@ button, input, textarea, select, a {
 /* 2. Sección Servicios */
 .home-services-section {
   padding: 80px 24px;
-  background-color: var(--color-white-pure);
+  background: transparent;
+  position: relative;
+  z-index: 1;
   text-align: center;
 }
 
@@ -554,7 +693,9 @@ button, input, textarea, select, a {
 /* 3. Sección Productos Destacados */
 .home-featured-section {
   padding: 80px 5%;
-  background-color: var(--color-white);
+  background: transparent;
+  position: relative;
+  z-index: 1;
   text-align: center;
 }
 
