@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useCart } from '../context/CartContext';
+import CanvaViewerModal from '../components/CanvaViewerModal';
+import { getCanvaEmbedUrl } from '../utils/canvaUtils';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -19,6 +21,8 @@ export default function ProductDetail() {
 
   // Estados del Modal Digital y Galería
   const [showDigitalModal, setShowDigitalModal] = useState(false);
+  const [showCanvaViewer, setShowCanvaViewer] = useState(false);
+  const [activeMediaTab, setActiveMediaTab] = useState('canva'); // 'canva' o 'foto'
   const [email, setEmail] = useState('');
   const [currentMainImage, setCurrentMainImage] = useState('');
 
@@ -39,6 +43,12 @@ export default function ProductDetail() {
 
         if (prodRes.error) throw prodRes.error;
         setProducto(prodRes.data);
+
+        if (prodRes.data?.enlace_canva) {
+          setActiveMediaTab('canva');
+        } else {
+          setActiveMediaTab('foto');
+        }
 
         if (prodRes.data?.imagen_url) {
           setCurrentMainImage(prodRes.data.imagen_url);
@@ -297,31 +307,95 @@ export default function ProductDetail() {
 
       <div className="detail-layout">
         
-        {/* COLUMNA IZQUIERDA: GALERÍA COMPLETA */}
+        {/* COLUMNA IZQUIERDA: VISOR DE CANVA EN VIVO O FOTO */}
         <div className="detail-gallery-col">
-          <div className="main-image-container">
-            {currentMainImage ? (
-              <img src={currentMainImage} alt={producto.nombre} decoding="async" />
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: '#f8fafc' }}>
-                Sin imagen de portada
-              </div>
-            )}
-          </div>
-          
-          {allImages.length > 1 && (
-            <div className="thumbnails-row">
-              {allImages.map((img, index) => (
-                <div 
-                  key={index}
-                  onClick={() => setActiveImg(img)}
-                  className="thumbnail-item"
-                  style={{ border: `2px solid ${currentMainImage === img ? 'var(--color-vivid-pink)' : 'transparent'}` }}
-                >
-                  <img src={img} alt={`Vista secundaria ${index + 1}`} loading="lazy" decoding="async" />
-                </div>
-              ))}
+          {/* Si tiene catálogo Canva y además imágenes cargadas, permitimos alternar */}
+          {producto?.enlace_canva && allImages.length > 0 && (
+            <div className="detail-media-nav-pills">
+              <button 
+                type="button"
+                onClick={() => setActiveMediaTab('canva')}
+                className={`detail-media-nav-pill ${activeMediaTab === 'canva' ? 'active' : ''}`}
+              >
+                🎨 Diseños y Modelos
+              </button>
+              <button 
+                type="button"
+                onClick={() => setActiveMediaTab('foto')}
+                className={`detail-media-nav-pill ${activeMediaTab === 'foto' ? 'active' : ''}`}
+              >
+                📸 Foto de Portada
+              </button>
             </div>
+          )}
+
+          {/* VISTA 1: Diseños cargados DIRECTAMENTE (en vivo al lado de los precios) */}
+          {producto?.enlace_canva && (activeMediaTab === 'canva' || allImages.length === 0) ? (
+            <div className="live-canva-embed-card">
+              <div className="live-canva-top-header" style={{ justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowCanvaViewer(true)} 
+                  className="btn-live-canva-fullscreen"
+                  title="Expandir a pantalla completa"
+                >
+                  ⛶ Pantalla Completa
+                </button>
+              </div>
+
+              <div className="live-canva-frame-container">
+                <iframe
+                  src={getCanvaEmbedUrl(producto.enlace_canva)}
+                  title={`Modelos: ${producto.nombre}`}
+                  className="live-canva-iframe"
+                  allow="fullscreen"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Barra de Usabilidad y Control en Celulares */}
+              <div className="live-canva-mobile-toolbar">
+                <button
+                  type="button"
+                  onClick={() => setShowCanvaViewer(true)}
+                  className="btn-mobile-canva-expand"
+                >
+                  ⛶ Abrir en Pantalla Completa (Ideal para celulares)
+                </button>
+                <div className="live-canva-swipe-tip">
+                  💡 <em>Toca las flechas ◀ ▶ en la barra inferior o abre en Pantalla Completa para hojear como un libro sin que se mueva la página.</em>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* VISTA 2: Galería de fotos tradicional */
+            <>
+              <div className="main-image-container">
+                {currentMainImage ? (
+                  <img src={currentMainImage} alt={producto.nombre} decoding="async" />
+                ) : (
+                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', background: '#f8fafc' }}>
+                    Sin imagen de portada
+                  </div>
+                )}
+              </div>
+              
+              {allImages.length > 1 && (
+                <div className="thumbnails-row">
+                  {allImages.map((img, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => setActiveImg(img)}
+                      className="thumbnail-item"
+                      style={{ border: `2px solid ${currentMainImage === img ? 'var(--color-vivid-pink)' : 'transparent'}` }}
+                    >
+                      <img src={img} alt={`Vista secundaria ${index + 1}`} loading="lazy" decoding="async" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -400,22 +474,24 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* Tabla de especificaciones */}
-          <div className="specs-table-container">
-            <h3 className="specs-table-title">📋 Detalles del Recurso</h3>
-            <table className="specs-table">
-              <tbody>
-                <tr>
-                  <td className="specs-label">Plataforma:</td>
-                  <td className="specs-value">{isDigital ? 'Canva Pro / Gratis' : 'Impresión de alta calidad'}</td>
-                </tr>
-                <tr>
-                  <td className="specs-label">Tipo de Entrega:</td>
-                  <td className="specs-value">{isDigital ? 'Enlace directo a plantilla' : 'Entrega personal / Envío'}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          {/* Solo para recursos digitales mostramos especificaciones de plataforma */}
+          {isDigital && (
+            <div className="specs-table-container">
+              <h3 className="specs-table-title">📋 Detalles del Recurso Digital</h3>
+              <table className="specs-table">
+                <tbody>
+                  <tr>
+                    <td className="specs-label">Plataforma:</td>
+                    <td className="specs-value">Canva Pro / Gratis</td>
+                  </tr>
+                  <tr>
+                    <td className="specs-label">Tipo de Entrega:</td>
+                    <td className="specs-value">Enlace directo a plantilla</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Botones de acción */}
           <div className="product-actions-group">
@@ -480,6 +556,13 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+      {/* VISOR INTERACTIVO DE CANVA DENTRO DE LA WEB (SIN REDIRECCIONES) */}
+      <CanvaViewerModal
+        isOpen={showCanvaViewer}
+        onClose={() => setShowCanvaViewer(false)}
+        canvaUrl={producto?.enlace_canva}
+        titulo={producto?.nombre || 'Catálogo de Diseños'}
+      />
     </div>
   );
 }

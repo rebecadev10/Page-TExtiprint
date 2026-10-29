@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import CanvaViewerModal from './CanvaViewerModal';
 
 const CACHE_KEY_PRODUCTS = 'textiprint_cached_products';
 const CACHE_KEY_TASA = 'textiprint_cached_tasa';
@@ -36,6 +37,7 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
   });
 
   const [fetchError, setFetchError] = useState(null);
+  const [modalCanva, setModalCanva] = useState({ isOpen: false, url: '', titulo: '' });
   const navigate = useNavigate();
 
   const [variacionesSeleccionadas, setVariacionesSeleccionadas] = useState(() => {
@@ -68,7 +70,10 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
           .select(`
             id,
             nombre,
+            descripcion,
             tipo,
+            categoria,
+            enlace_canva,
             imagen_url,
             product_variations (
               id,
@@ -130,17 +135,31 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
 
   const matchCategoria = useCallback((p, cat) => {
     if (!cat || cat === 'todos') return true;
+    
+    // 1. Verificación por campo formal 'categoria' configurado desde el Admin
+    const pCat = (p.categoria || '').toLowerCase().trim();
+    if (pCat) {
+      if (cat === 'navidad' && (pCat.includes('navidad') || pCat.includes('navideñ') || pCat.includes('navid'))) return true;
+      if (cat === 'canva' && (pCat.includes('canva') || pCat.includes('plantilla') || pCat.includes('digital'))) return true;
+      if (cat === 'toppers' && (pCat.includes('topper') || pCat.includes('foto') || pCat.includes('polaroid') || pCat.includes('recuerdo'))) return true;
+      if (cat === 'escolar' && (pCat.includes('escolar') || pCat.includes('etiqueta'))) return true;
+      if (cat === 'corporativo' && (pCat.includes('corporativ') || pCat.includes('papeler') || pCat.includes('tarjeta'))) return true;
+    }
+
+    // 2. Fallback heurístico para productos que aún no tengan categoría configurada
     const n = (p.nombre || '').toLowerCase();
     const d = p.tipo === 'digital';
+    if (cat === 'navidad') return n.includes('navidad') || n.includes('navideñ') || n.includes('franela');
     if (cat === 'canva') return d;
     if (cat === 'toppers') return !d && (n.includes('topper') || n.includes('polaroid') || n.includes('foto') || n.includes('albúm') || n.includes('album') || n.includes('cuadro'));
     if (cat === 'escolar') return !d && (n.includes('escolar') || n.includes('etiqueta') || (n.includes('sticker') && !n.includes('emprendedor')) || n.includes('cartuchera') || n.includes('tula') || n.includes('cotillon'));
-    if (cat === 'corporativo') return !d && (n.includes('tarjeta') || n.includes('emprendedor') || n.includes('impresion') || n.includes('llavero') || n.includes('franela') || n.includes('boxer') || n.includes('bóxer'));
+    if (cat === 'corporativo') return !d && (n.includes('tarjeta') || n.includes('emprendedor') || n.includes('impresion') || n.includes('llavero') || (!n.includes('navidad') && n.includes('franela')) || n.includes('boxer') || n.includes('bóxer'));
     return true;
   }, []);
 
   const CATEGORIAS_PILLS = useMemo(() => [
     { id: 'todos', label: '✨ Todos', icon: '✨' },
+    { id: 'navidad', label: '🎄 Navidad', icon: '🎄' },
     { id: 'toppers', label: '🎂 Toppers & Fotos', icon: '🎂' },
     { id: 'canva', label: '💻 Plantillas Canva', icon: '💻' },
     { id: 'escolar', label: '🎒 Kits Escolares', icon: '🎒' },
@@ -272,6 +291,11 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
                       ⚡ Plantilla Canva
                     </span>
                   )}
+                  {(producto.categoria?.toLowerCase().includes('navidad') || producto.nombre?.toLowerCase().includes('navidad')) && (
+                    <span className="product-format-badge badge-navidad">
+                      🎄 Especial Navidad
+                    </span>
+                  )}
                   <img 
                     src={producto.imagen_url || 'https://via.placeholder.com/300x350?text=Textiprint'} 
                     alt={producto.nombre} 
@@ -308,6 +332,24 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
                     <p style={{ fontSize: '0.75rem', color: '#ff4d4d', textAlign: 'center' }}>Sin precios configurados</p>
                   )}
 
+                  {/* Botón si el producto tiene enlace de catálogo configurado */}
+                  {producto.enlace_canva && (
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalCanva({
+                          isOpen: true,
+                          url: producto.enlace_canva,
+                          titulo: `Modelos y Diseños: ${producto.nombre}`
+                        });
+                      }}
+                      className="btn-card-canva"
+                    >
+                      🎨 Ver Diseños
+                    </button>
+                  )}
+
                   {/* Único bloque de precio: Solo Bolívares (Bs.) */}
                   <div className="featured-item-price">
                     Bs. {precioVES.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -327,6 +369,14 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
           })}
         </div>
       )}
+
+      {/* Visor Interactivo de Canva dentro de la web (sin abrir pestañas externas) */}
+      <CanvaViewerModal 
+        isOpen={modalCanva.isOpen}
+        onClose={() => setModalCanva({ isOpen: false, url: '', titulo: '' })}
+        canvaUrl={modalCanva.url}
+        titulo={modalCanva.titulo}
+      />
     </div>
   );
 }

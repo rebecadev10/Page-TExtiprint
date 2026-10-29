@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductsList from '../components/Products';
 import FAQ from '../components/FAQ';
+import CanvaViewerModal from '../components/CanvaViewerModal';
+import { supabase } from '../supabaseClient';
 import Hero1 from '../assets/Hero1.webp';
+import bannerNavidadImg from '../assets/banner_navidad_selected.png';
 
 // 📸 Imágenes optimizadas en WebP para máxima velocidad
 import topperImg from '../assets/Topper.webp';
@@ -13,6 +16,32 @@ import corporativoImg from '../assets/Tarjetas.webp';
 export default function Home() {
   const navigate = useNavigate();
   const [categoriaFiltro, setCategoriaFiltro] = useState('todos');
+  const [christmasCanvaUrl, setChristmasCanvaUrl] = useState(null);
+  const [showHomeCanva, setShowHomeCanva] = useState(false);
+
+  useEffect(() => {
+    async function buscarCatalogoCanva() {
+      try {
+        const { data, error } = await supabase
+          .from('productos')
+          .select('enlace_canva, nombre, categoria')
+          .not('enlace_canva', 'is', null)
+          .limit(10);
+
+        if (!error && data && data.length > 0) {
+          // Priorizamos el que pertenezca a la categoría de Navidad o mencione Navidad
+          const navidadProd = data.find(p => 
+            (p.categoria && p.categoria.toLowerCase().includes('navidad')) ||
+            (p.nombre && p.nombre.toLowerCase().includes('navidad'))
+          );
+          setChristmasCanvaUrl(navidadProd?.enlace_canva || data[0]?.enlace_canva);
+        }
+      } catch (err) {
+        console.warn('Aviso de catálogo Canva en Home:', err);
+      }
+    }
+    buscarCatalogoCanva();
+  }, []);
 
   const handleScrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -146,6 +175,51 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 🎄 BANNER ESPECIAL DE TEMPORADA NAVIDEÑA */}
+      <section className="christmas-hero-banner" aria-label="Especial de Navidad Textiprint">
+        <div 
+          className="christmas-banner-container"
+          style={{ backgroundImage: `url(${bannerNavidadImg})` }}
+        >
+          {/* Capa traslúcida suave para máxima legibilidad (Opción A) */}
+          <div className="christmas-banner-overlay"></div>
+
+          <div className="christmas-banner-content">
+            <div className="christmas-banner-badge-row">
+              <span className="christmas-pill">🎄 ¡Llegó la Navidad!</span>
+              <span className="christmas-tag-sub">❄️ Temporada Especial Textiprint</span>
+            </div>
+
+            <h2 className="christmas-title">
+              ¡Llegó la Navidad a Textiprint!
+            </h2>
+            <p className="christmas-desc">
+              Explora todos los productos y detalles especiales que tenemos preparados para ti en esta temporada: franelas personalizadas, cake toppers festivos, papelería creativa y recuerdos mágicos para celebrar en familia.
+            </p>
+
+            <div className="christmas-cta-group">
+              <button 
+                type="button" 
+                onClick={() => handleSelectCategory('navidad')} 
+                className="btn-christmas-primary"
+              >
+                🎁 Ver Colección Navideña
+              </button>
+
+              {christmasCanvaUrl && (
+                <button 
+                  type="button" 
+                  onClick={() => setShowHomeCanva(true)} 
+                  className="btn-christmas-secondary"
+                >
+                  📖 Ver Catálogo de Modelos
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 2. SECCIÓN NUESTROS SERVICIOS Y CATEGORÍAS */}
       <section className="home-services-section">
         <span className="home-section-subtitle-purple">¿Qué hacemos?</span>
@@ -253,6 +327,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Visor Interactivo de Canva para la portada / catálogo de Navidad */}
+      <CanvaViewerModal
+        isOpen={showHomeCanva}
+        onClose={() => setShowHomeCanva(false)}
+        canvaUrl={christmasCanvaUrl}
+        titulo="Catálogo de Franelas Navideñas Textiprint"
+      />
     </div>
   );
 }
