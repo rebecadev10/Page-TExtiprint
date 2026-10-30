@@ -205,16 +205,6 @@ export default function Home() {
               >
                 🎁 Ver Colección Navideña
               </button>
-
-              {christmasCanvaUrl && (
-                <button 
-                  type="button" 
-                  onClick={() => setShowHomeCanva(true)} 
-                  className="btn-christmas-secondary"
-                >
-                  📖 Ver Catálogo de Modelos
-                </button>
-              )}
             </div>
           </div>
         </div>

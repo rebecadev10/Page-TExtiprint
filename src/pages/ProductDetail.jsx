@@ -307,42 +307,11 @@ export default function ProductDetail() {
 
       <div className="detail-layout">
         
-        {/* COLUMNA IZQUIERDA: VISOR DE CANVA EN VIVO O FOTO */}
+        {/* COLUMNA IZQUIERDA: VISOR DE CANVA DIRECTO O FOTO */}
         <div className="detail-gallery-col">
-          {/* Si tiene catálogo Canva y además imágenes cargadas, permitimos alternar */}
-          {producto?.enlace_canva && allImages.length > 0 && (
-            <div className="detail-media-nav-pills">
-              <button 
-                type="button"
-                onClick={() => setActiveMediaTab('canva')}
-                className={`detail-media-nav-pill ${activeMediaTab === 'canva' ? 'active' : ''}`}
-              >
-                🎨 Diseños y Modelos
-              </button>
-              <button 
-                type="button"
-                onClick={() => setActiveMediaTab('foto')}
-                className={`detail-media-nav-pill ${activeMediaTab === 'foto' ? 'active' : ''}`}
-              >
-                📸 Foto de Portada
-              </button>
-            </div>
-          )}
-
-          {/* VISTA 1: Diseños cargados DIRECTAMENTE (en vivo al lado de los precios) */}
-          {producto?.enlace_canva && (activeMediaTab === 'canva' || allImages.length === 0) ? (
-            <div className="live-canva-embed-card">
-              <div className="live-canva-top-header" style={{ justifyContent: 'flex-end' }}>
-                <button 
-                  type="button" 
-                  onClick={() => setShowCanvaViewer(true)} 
-                  className="btn-live-canva-fullscreen"
-                  title="Expandir a pantalla completa"
-                >
-                  ⛶ Pantalla Completa
-                </button>
-              </div>
-
+          {producto?.enlace_canva ? (
+            /* Canva embebido al máximo tamaño posible sin elementos que resten visibilidad */
+            <div className="live-canva-embed-card max-view">
               <div className="live-canva-frame-container">
                 <iframe
                   src={getCanvaEmbedUrl(producto.enlace_canva)}
@@ -352,24 +321,18 @@ export default function ProductDetail() {
                   allowFullScreen
                   loading="lazy"
                 />
-              </div>
-
-              {/* Barra de Usabilidad y Control en Celulares */}
-              <div className="live-canva-mobile-toolbar">
-                <button
-                  type="button"
-                  onClick={() => setShowCanvaViewer(true)}
-                  className="btn-mobile-canva-expand"
+                <button 
+                  type="button" 
+                  onClick={() => setShowCanvaViewer(true)} 
+                  className="btn-floating-canva-fullscreen"
+                  title="Expandir a pantalla completa"
                 >
-                  ⛶ Abrir en Pantalla Completa (Ideal para celulares)
+                  ⛶ Pantalla Completa
                 </button>
-                <div className="live-canva-swipe-tip">
-                  💡 <em>Toca las flechas ◀ ▶ en la barra inferior o abre en Pantalla Completa para hojear como un libro sin que se mueva la página.</em>
-                </div>
               </div>
             </div>
           ) : (
-            /* VISTA 2: Galería de fotos tradicional */
+            /* Galería de fotos tradicional si no tiene Canva */
             <>
               <div className="main-image-container">
                 {currentMainImage ? (
