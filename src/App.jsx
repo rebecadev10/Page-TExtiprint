@@ -10,10 +10,12 @@ import AboutUs from './components/AboutUs';
 import NotFound from './pages/NotFound';
 import { CartProvider } from './context/CartContext';
 import CartDrawer from './components/CartDrawer';
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <CartProvider>
         <Routes>
           {/* Todas las páginas dentro de MainLayout compartirán el mismo Navbar y Footer */}

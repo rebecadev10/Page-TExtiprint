@@ -31,6 +31,9 @@ export default function ProductDetail() {
 
   // Cargar producto, variaciones y tasa de cambio en paralelo (3x más rápido)
   useEffect(() => {
+    // Asegurar que la pantalla suba inmediatamente a la cabecera del producto
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
     const fetchProductoYDatos = async () => {
       try {
         setLoading(true);
