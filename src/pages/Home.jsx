@@ -156,19 +156,23 @@ export default function Home() {
           {/* COLUMNA DERECHA */}
           <div className="hero-image-side">
             <div className="hero-mockup-wrapper">
-              <img 
-                src="/hero.webp" 
-                alt="Colección Exclusiva Textiprint Showcase" 
-                className="hero-showcase-img"
-                width="540"
-                height="432"
-                fetchPriority="high"
-                loading="eager"
-                decoding="async"
-                onError={(e) => {
-                  e.target.src = "https://placehold.co/540x400/fdf2f8/db2777?text=Textiprint+Creative+✨";
-                }}
-              />
+              <picture>
+                <source media="(max-width: 640px)" srcSet="/hero-mobile.webp" type="image/webp" />
+                <source media="(min-width: 641px)" srcSet="/hero.webp" type="image/webp" />
+                <img 
+                  src="/hero.webp" 
+                  alt="Colección Exclusiva Textiprint Showcase" 
+                  className="hero-showcase-img"
+                  width="540"
+                  height="432"
+                  fetchPriority="high"
+                  loading="eager"
+                  decoding="async"
+                  onError={(e) => {
+                    e.target.src = "https://placehold.co/540x400/fdf2f8/db2777?text=Textiprint+Creative+✨";
+                  }}
+                />
+              </picture>
             </div>
           </div>
 

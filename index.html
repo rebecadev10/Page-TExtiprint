@@ -2,10 +2,23 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- 1. PRELOAD LCP INMEDIATO: Máxima prioridad antes de cualquier script o estilo -->
+    <link rel="preload" as="image" href="/hero-mobile.webp" media="(max-width: 640px)" fetchpriority="high" type="image/webp" />
+    <link rel="preload" as="image" href="/hero.webp" media="(min-width: 641px)" fetchpriority="high" type="image/webp" />
+
+    <!-- 2. CONEXIONES PREVIAS DE TIPOGRAFÍA -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" />
+    </noscript>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Título Estratégico para Buscadores (SEO) -->
     <title>Textiprint | Papelería Creativa, Franelas Navideñas, Cake Toppers y Plantillas Canva en Venezuela</title>
@@ -44,17 +57,6 @@
     <meta name="twitter:title" content="Textiprint | Papelería Creativa, Franelas y Plantillas Canva" />
     <meta name="twitter:description" content="Colección navideña, franelas personalizadas, cake toppers 3D y plantillas editables en Canva. Envíos a toda Venezuela." />
     <meta name="twitter:image" content="https://textiprint.vercel.app/og-image.jpg" />
-
-    <!-- Preload del recurso LCP (Hero Image) con máxima prioridad -->
-    <link rel="preload" as="image" href="/hero.webp" fetchpriority="high" type="image/webp" />
-
-    <!-- Google Fonts: Poppins (Optimizado para no bloquear el renderizado) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" media="print" onload="this.media='all'" />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" />
-    </noscript>
 
     <!-- Datos Estructurados Schema.org (Google Rich Snippets / Google Knowledge Graph) -->
     <script type="application/ld+json">
