@@ -45,13 +45,15 @@
     <meta name="twitter:description" content="Colección navideña, franelas personalizadas, cake toppers 3D y plantillas editables en Canva. Envíos a toda Venezuela." />
     <meta name="twitter:image" content="https://textiprint.vercel.app/og-image.jpg" />
 
+    <!-- Preload del recurso LCP (Hero Image) con máxima prioridad -->
+    <link rel="preload" as="image" href="/hero.webp" fetchpriority="high" type="image/webp" />
+
     <!-- Google Fonts: Poppins (Optimizado para no bloquear el renderizado) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" media="print" onload="this.media='all'" />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" />
     </noscript>
 
     <!-- Datos Estructurados Schema.org (Google Rich Snippets / Google Knowledge Graph) -->

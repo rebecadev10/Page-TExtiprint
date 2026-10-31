@@ -4,8 +4,7 @@ import ProductsList from '../components/Products';
 import FAQ from '../components/FAQ';
 import CanvaViewerModal from '../components/CanvaViewerModal';
 import { supabase } from '../supabaseClient';
-import Hero1 from '../assets/Hero1.webp';
-import bannerNavidadImg from '../assets/banner_navidad_selected.png';
+import bannerNavidadImg from '../assets/banner_navidad_selected.webp';
 
 // 📸 Imágenes optimizadas en WebP para máxima velocidad
 import topperImg from '../assets/Topper.webp';
@@ -158,12 +157,13 @@ export default function Home() {
           <div className="hero-image-side">
             <div className="hero-mockup-wrapper">
               <img 
-                src={Hero1} 
+                src="/hero.webp" 
                 alt="Colección Exclusiva Textiprint Showcase" 
                 className="hero-showcase-img"
                 width="540"
                 height="432"
                 fetchPriority="high"
+                loading="eager"
                 decoding="async"
                 onError={(e) => {
                   e.target.src = "https://placehold.co/540x400/fdf2f8/db2777?text=Textiprint+Creative+✨";
