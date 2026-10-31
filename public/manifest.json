@@ -1,0 +1,23 @@
+{
+  "name": "Textiprint - Papelería Creativa & Recursos Digitales",
+  "short_name": "Textiprint",
+  "description": "Taller creativo de papelería personalizada, cake toppers, ropa personalizada y plantillas en Canva en Venezuela.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6f237e",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -135,35 +135,57 @@ export default function ProductsList({ categoriaFiltro = 'todos', onSelectCatego
 
   const matchCategoria = useCallback((p, cat) => {
     if (!cat || cat === 'todos') return true;
-    
+
+    // Normalizar texto eliminando acentos y convirtiendo a minúsculas
+    const normalize = (str) =>
+      (str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    const pCat = normalize(p.categoria);
+    const n = normalize(p.nombre);
+    const isDigital = p.tipo === 'digital';
+
     // 1. Verificación por campo formal 'categoria' configurado desde el Admin
-    const pCat = (p.categoria || '').toLowerCase().trim();
     if (pCat) {
-      if (cat === 'navidad' && (pCat.includes('navidad') || pCat.includes('navideñ') || pCat.includes('navid'))) return true;
+      if (cat === 'navidad' && (pCat.includes('navidad') || pCat.includes('naviden'))) return true;
+      if (cat === 'toppers' && pCat.includes('topper')) return true;
       if (cat === 'canva' && (pCat.includes('canva') || pCat.includes('plantilla') || pCat.includes('digital'))) return true;
-      if (cat === 'toppers' && (pCat.includes('topper') || pCat.includes('foto') || pCat.includes('polaroid') || pCat.includes('recuerdo'))) return true;
-      if (cat === 'escolar' && (pCat.includes('escolar') || pCat.includes('etiqueta'))) return true;
-      if (cat === 'corporativo' && (pCat.includes('corporativ') || pCat.includes('papeler') || pCat.includes('tarjeta'))) return true;
+      if (cat === 'fotos' && (pCat.includes('foto') || pCat.includes('polaroid'))) return true;
+      if (cat === 'regalos' && (pCat.includes('regalo') || pCat.includes('detalle'))) return true;
+      if (cat === 'corporativo' && (pCat.includes('corporativ') || pCat.includes('papeleria'))) return true;
+      if (cat === 'escolar' && pCat.includes('escolar')) return true;
+      if (cat === 'ropa' && (pCat.includes('ropa') || pCat.includes('franela') || pCat.includes('textil') || pCat.includes('boxer'))) return true;
+      if (cat === 'cumpleanos' && (pCat.includes('cumplean') || pCat.includes('cumple') || pCat.includes('fiesta'))) return true;
     }
 
-    // 2. Fallback heurístico para productos que aún no tengan categoría configurada
-    const n = (p.nombre || '').toLowerCase();
-    const d = p.tipo === 'digital';
-    if (cat === 'navidad') return n.includes('navidad') || n.includes('navideñ') || n.includes('franela');
-    if (cat === 'canva') return d;
-    if (cat === 'toppers') return !d && (n.includes('topper') || n.includes('polaroid') || n.includes('foto') || n.includes('albúm') || n.includes('album') || n.includes('cuadro'));
-    if (cat === 'escolar') return !d && (n.includes('escolar') || n.includes('etiqueta') || (n.includes('sticker') && !n.includes('emprendedor')) || n.includes('cartuchera') || n.includes('tula') || n.includes('cotillon'));
-    if (cat === 'corporativo') return !d && (n.includes('tarjeta') || n.includes('emprendedor') || n.includes('impresion') || n.includes('llavero') || (!n.includes('navidad') && n.includes('franela')) || n.includes('boxer') || n.includes('bóxer'));
-    return true;
+    // 2. Fallback heurístico inteligente para productos que aún no tengan categoría configurada
+    if (cat === 'navidad') return n.includes('navidad') || n.includes('naviden');
+    if (cat === 'toppers') return !isDigital && n.includes('topper');
+    if (cat === 'canva') return isDigital || n.includes('canva') || n.includes('plantilla');
+    if (cat === 'fotos') return !isDigital && (n.includes('foto') || n.includes('polaroid') || n.includes('album') || n.includes('cuadro'));
+    if (cat === 'regalos') return !isDigital && (n.includes('regalo') || n.includes('taza') || n.includes('llavero') || n.includes('vaso') || n.includes('portarretrato'));
+    if (cat === 'corporativo') return !isDigital && (n.includes('tarjeta') || n.includes('corporativ') || n.includes('factura') || n.includes('sobre') || n.includes('membret'));
+    if (cat === 'escolar') return !isDigital && (n.includes('escolar') || n.includes('etiqueta') || n.includes('cartuchera') || n.includes('tula') || n.includes('utiles'));
+    if (cat === 'ropa') return !isDigital && (n.includes('franela') || n.includes('ropa') || n.includes('camisa') || n.includes('boxer') || n.includes('gorra') || n.includes('sueter'));
+    if (cat === 'cumpleanos') return !isDigital && (n.includes('cumple') || n.includes('cotillon') || n.includes('fiesta') || n.includes('invitacion'));
+
+    return false;
   }, []);
 
   const CATEGORIAS_PILLS = useMemo(() => [
     { id: 'todos', label: '✨ Todos', icon: '✨' },
     { id: 'navidad', label: '🎄 Navidad', icon: '🎄' },
-    { id: 'toppers', label: '🎂 Toppers & Fotos', icon: '🎂' },
-    { id: 'canva', label: '💻 Plantillas Canva', icon: '💻' },
-    { id: 'escolar', label: '🎒 Kits Escolares', icon: '🎒' },
-    { id: 'corporativo', label: '💼 Papelería Corporativa', icon: '💼' }
+    { id: 'toppers', label: '🎂 Toppers', icon: '🎂' },
+    { id: 'canva', label: '💻 Plantillas de canva', icon: '💻' },
+    { id: 'fotos', label: '📸 Fotos', icon: '📸' },
+    { id: 'regalos', label: '🎁 Regalos', icon: '🎁' },
+    { id: 'corporativo', label: '💼 Papeleria Corporativa', icon: '💼' },
+    { id: 'escolar', label: '🎒 Kit escolares', icon: '🎒' },
+    { id: 'ropa', label: '👕 Ropa personalizada', icon: '👕' },
+    { id: 'cumpleanos', label: '🎉 Kits de Cumpleaños', icon: '🎉' }
   ], []);
 
   const productosFiltrados = useMemo(() => {
